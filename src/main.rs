@@ -8,7 +8,7 @@ struct ActivityData {
     timestamp: DateTime<Local>,
 }
 
-fn parse_fit_file(filename: String) -> Result<ActivityData, String> {
+fn parse_fit_file(filename: &str) -> Result<ActivityData, String> {
     let mut activity_data = ActivityData {
         sport: String::from("unknown"),
         timestamp: chrono::Local.ymd(1970, 1, 1).and_hms(0, 0, 0),
@@ -27,54 +27,33 @@ fn parse_fit_file(filename: String) -> Result<ActivityData, String> {
     };
 
     // iterate over all data elements
-    for data in parsed_data {
-        match data.kind() {
-            // extract the timestamp of the activity and check it is an activity
-            fitparser::profile::field_types::MesgNum::FileId => {
-                for field in data.fields() {
-                    match field.name() {
-                        "time_created" => match &field.value() {
-                            fitparser::Value::Timestamp(val) => activity_data.timestamp = *val,
-                            &_ => {
-                                return Err(String::from(
-                                    "unexpected value in enum fitparser::Value",
-                                ))
-                            }
-                        },
-                        "type" => match &field.value() {
-                            fitparser::Value::String(_val) => continue,
-                            &_ => {
-                                return Err(String::from(
-                                    "unexpected value in enum fitparser::Value",
-                                ))
-                            }
-                        },
-                        &_ => (), // ignore all other values
-                    }
-                }
-            }
+    activity_data.timestamp = match parsed_data
+        .iter()
+        .find(|data| data.kind() == fitparser::profile::field_types::MesgNum::FileId)
+        .unwrap()
+        .fields()
+        .iter()
+        .find(|field| field.name() == "time_created")
+        .unwrap()
+        .value()
+    {
+        fitparser::Value::Timestamp(val) => *val,
+        &_ => return Err(String::from("unexpected value in enum fitparser::Value")),
+    };
+    activity_data.sport = match parsed_data
+        .iter()
+        .find(|data| data.kind() == fitparser::profile::field_types::MesgNum::Sport)
+        .unwrap()
+        .fields()
+        .iter()
+        .find(|field| field.name() == "sport")
+        .unwrap()
+        .value()
+    {
+        fitparser::Value::String(val) => val.to_string(),
+        &_ => return Err(String::from("unexpected value in enum fitparser::Value")),
+    };
 
-            // extract the sport type of the activity
-            fitparser::profile::field_types::MesgNum::Sport => {
-                for field in data.fields() {
-                    match field.name() {
-                        "sport" => match &field.value() {
-                            fitparser::Value::String(val) => {
-                                activity_data.sport = val.to_string();
-                            }
-                            &_ => {
-                                return Err(String::from(
-                                    "unexpected value in enum fitparser::Value",
-                                ))
-                            }
-                        },
-                        &_ => (), // ignore all other values
-                    }
-                }
-            }
-            _ => (), // ignore all other values
-        }
-    }
     Ok(activity_data)
 }
 
@@ -112,7 +91,7 @@ fn main() -> ExitCode {
     );
 
     for filename in filenames {
-        match parse_fit_file(filename.to_string()) {
+        match parse_fit_file(filename) {
             Ok(val) => {
                 println!(
                     "{} -> {}/{}/{}-{}.fit",
