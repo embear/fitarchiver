@@ -92,7 +92,13 @@ fn main() -> ExitCode {
                 .default_value(".")
                 .help("Base directory where the archive is created"),
         )
-        .arg(Arg::with_name("files").multiple(true).required(true))
+        .arg(
+            Arg::with_name("files")
+                .multiple(true)
+                .value_name("files")
+                .required(true)
+                .help("FIT files to archive"),
+        )
         .get_matches();
 
     let filenames: Vec<&str> = options.values_of("files").unwrap().collect();
@@ -105,16 +111,22 @@ fn main() -> ExitCode {
         fitparser::profile::VERSION
     );
 
-    let filename = String::from("/tmp/activity.fit");
+    for filename in filenames {
+        match parse_fit_file(filename.to_string()) {
+            Ok(val) => {
+                println!(
+                    "{} -> {}/{}/{}-{}.fit",
+                    filename,
+                    destination,
+                    val.timestamp.format("%Y/%m"),
+                    val.timestamp.format("%Y-%m-%d-%H%M%S"),
+                    val.sport
+                );
+            }
+            Err(msg) => println!("ERROR: {}", msg),
+        };
+    }
 
-    match parse_fit_file(filename) {
-        Ok(val) => {
-            println!("file: {}", val.timestamp.format("%Y%m%dT%H%M%SZ"));
-            println!("directory: {}", val.timestamp.format("%Y/%m"));
-            println!("sport: {}", val.sport);
-        }
-        Err(msg) => println!("ERROR: {}", msg),
-    };
 
     ExitCode::SUCCESS
 }
