@@ -1,8 +1,11 @@
 [package]
 name = "fitarchiver"
+authors = [ "Markus Braun <markus.braun@krawel.de>" ]
+description = "Rename FIT files based on activity data and copy it to a directory based on year and month of the activity."
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 fitparser = "0.5.0"
 chrono = "0.4.19"
+clap = "3.2.16"

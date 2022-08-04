@@ -1,4 +1,5 @@
 use chrono::{DateTime, Local, TimeZone};
+use clap::{Arg, Command};
 use std::fs::File;
 use std::process::ExitCode;
 
@@ -78,6 +79,27 @@ fn parse_fit_file(filename: String) -> Result<ActivityData, String> {
 }
 
 fn main() -> ExitCode {
+    let options = Command::new("FIT file archiver")
+        .version(env!("CARGO_PKG_VERSION"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .about(env!("CARGO_PKG_DESCRIPTION"))
+        .arg(
+            Arg::with_name("directory")
+                .short('d')
+                .long("directory")
+                .takes_value(true)
+                .value_name("base directory")
+                .default_value(".")
+                .help("Base directory where the archive is created"),
+        )
+        .arg(Arg::with_name("files").multiple(true).required(true))
+        .get_matches();
+
+    let filenames: Vec<&str> = options.values_of("files").unwrap().collect();
+    println!("filenames: {}", filenames.join(" "));
+    let destination = options.value_of("directory").unwrap();
+    println!("directory: {}", destination);
+
     println!(
         "Parsing FIT files using Profile version: {}",
         fitparser::profile::VERSION
