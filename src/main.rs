@@ -1,17 +1,17 @@
-use chrono::{DateTime, Local, TimeZone};
+use chrono::{DateTime, TimeZone, Utc};
 use clap::{Arg, Command};
 use std::fs::{self, File};
 use std::process::ExitCode;
 
 struct ActivityData {
     sport: String,
-    timestamp: DateTime<Local>,
+    timestamp: DateTime<Utc>,
 }
 
 fn parse_fit_file(filename: &str) -> Result<ActivityData, String> {
     let mut activity_data = ActivityData {
         sport: String::from("unknown"),
-        timestamp: chrono::Local.ymd(1970, 1, 1).and_hms(0, 0, 0),
+        timestamp: chrono::Utc.ymd(1970, 1, 1).and_hms(0, 0, 0),
     };
 
     // open FIT file
@@ -27,42 +27,50 @@ fn parse_fit_file(filename: &str) -> Result<ActivityData, String> {
     };
 
     // iterate over all data elements
-    activity_data.timestamp = match parsed_data
-        .iter()
-        .find(|data| data.kind() == fitparser::profile::field_types::MesgNum::FileId)
-        .unwrap()
-        .fields()
-        .iter()
-        .find(|field| field.name() == "time_created")
-        .unwrap()
-        .value()
-    {
-        fitparser::Value::Timestamp(val) => *val,
-        &_ => {
-            return Err(format!(
-                "Unexpected value in enum fitparser::Value in '{}'",
-                filename
-            ))
+    for data in parsed_data {
+        match data.kind() {
+            // extract the timestamp of the activity and check it is an activity
+            fitparser::profile::field_types::MesgNum::FileId => {
+                for field in data.fields() {
+                    match field.name() {
+                        "time_created" => match &field.value() {
+                            fitparser::Value::Timestamp(val) => {
+                                activity_data.timestamp = DateTime::from(*val)
+                            }
+                            &_ => {
+                                return Err(format!(
+                                    "Unexpected value in enum fitparser::Value in '{}'",
+                                    filename
+                                ))
+                            }
+                        },
+                        &_ => (), // ignore all other values
+                    }
+                }
+            }
+
+            // extract the sport type of the activity
+            fitparser::profile::field_types::MesgNum::Sport => {
+                for field in data.fields() {
+                    match field.name() {
+                        "sport" => match &field.value() {
+                            fitparser::Value::String(val) => {
+                                activity_data.sport = val.to_string();
+                            }
+                            &_ => {
+                                return Err(format!(
+                                    "Unexpected value in enum fitparser::Value in '{}'",
+                                    filename
+                                ))
+                            }
+                        },
+                        &_ => (), // ignore all other values
+                    }
+                }
+            }
+            _ => (), // ignore all other values
         }
-    };
-    activity_data.sport = match parsed_data
-        .iter()
-        .find(|data| data.kind() == fitparser::profile::field_types::MesgNum::Sport)
-        .unwrap()
-        .fields()
-        .iter()
-        .find(|field| field.name() == "sport")
-        .unwrap()
-        .value()
-    {
-        fitparser::Value::String(val) => val.to_string(),
-        &_ => {
-            return Err(format!(
-                "Unexpected value in enum fitparser::Value in '{}'",
-                filename
-            ))
-        }
-    };
+    }
 
     Ok(activity_data)
 }
@@ -99,11 +107,6 @@ fn parse_arguments() -> clap::ArgMatches {
 }
 
 fn process_files(options: clap::ArgMatches) -> Result<String, String> {
-    println!(
-        "Parsing FIT files using Profile version: {}",
-        fitparser::profile::VERSION
-    );
-
     let mut file_counter: u16 = 0;
     let mut error_counter: u16 = 0;
 
