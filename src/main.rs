@@ -57,8 +57,8 @@ fn parse_fit_file(filename: &str) -> Result<ActivityData, String> {
     Ok(activity_data)
 }
 
-fn main() -> ExitCode {
-    let options = Command::new("FIT file archiver")
+fn parse_arguments() -> clap::ArgMatches {
+    Command::new("FIT file archiver")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
@@ -78,7 +78,11 @@ fn main() -> ExitCode {
                 .required(true)
                 .help("FIT files to archive"),
         )
-        .get_matches();
+        .get_matches()
+}
+
+fn main() -> ExitCode {
+    let options = parse_arguments();
 
     let filenames: Vec<&str> = options.values_of("files").unwrap().collect();
     println!("filenames: {}", filenames.join(" "));
