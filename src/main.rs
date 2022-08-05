@@ -88,9 +88,7 @@ fn parse_arguments() -> clap::ArgMatches {
         .get_matches()
 }
 
-fn main() -> ExitCode {
-    let options = parse_arguments();
-
+fn process_files(options: clap::ArgMatches) -> Result<String, String> {
     let filenames: Vec<&str> = options.values_of("files").unwrap().collect();
     println!("filenames: {}", filenames.join(" "));
     let destination = options.value_of("directory").unwrap();
@@ -118,6 +116,14 @@ fn main() -> ExitCode {
         };
     }
 
+    Ok(String::from("Processed XYZ files"))
+}
+
+fn main() -> ExitCode {
+    match process_files(parse_arguments()) {
+        Ok(val) => println!("{}", val),
+        Err(val) => println!("{}", val),
+    };
 
     ExitCode::SUCCESS
 }
