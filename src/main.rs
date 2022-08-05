@@ -72,6 +72,13 @@ fn parse_arguments() -> clap::ArgMatches {
                 .help("Base directory where the archive is created"),
         )
         .arg(
+            Arg::with_name("move")
+                .short('m')
+                .long("move")
+                .takes_value(false)
+                .help("Move instead of copying files to archive"),
+        )
+        .arg(
             Arg::with_name("files")
                 .multiple(true)
                 .value_name("files")
@@ -88,6 +95,7 @@ fn main() -> ExitCode {
     println!("filenames: {}", filenames.join(" "));
     let destination = options.value_of("directory").unwrap();
     println!("directory: {}", destination);
+    println!("move: {:#?}", options.is_present("move"));
 
     println!(
         "Parsing FIT files using Profile version: {}",
