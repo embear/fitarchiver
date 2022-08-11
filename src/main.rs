@@ -96,7 +96,8 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                     match field.name() {
                         "name" => match &field.value() {
                             fitparser::Value::String(val) => {
-                                activity_data.sport_name = val.to_string();
+                                activity_data.sport_name =
+                                    val.to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
                                 return Err(format!(
@@ -107,7 +108,8 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                         },
                         "sport" => match &field.value() {
                             fitparser::Value::String(val) => {
-                                activity_data.sport = val.to_string();
+                                activity_data.sport =
+                                    val.to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
                                 return Err(format!(
@@ -118,7 +120,8 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                         },
                         "sub_sport" => match &field.value() {
                             fitparser::Value::String(val) => {
-                                activity_data.sub_sport = val.to_string();
+                                activity_data.sub_sport =
+                                    val.to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
                                 return Err(format!(
@@ -138,7 +141,8 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                     match field.name() {
                         "wkt_name" => match &field.value() {
                             fitparser::Value::String(val) => {
-                                activity_data.workout_name = val.to_string();
+                                activity_data.workout_name =
+                                    val.to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
                                 return Err(format!(
