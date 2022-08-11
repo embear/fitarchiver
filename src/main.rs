@@ -7,6 +7,7 @@ use std::process::ExitCode;
 
 struct ActivityData {
     sport: String,
+    sport_name: String,
     sub_sport: String,
     workout_name: String,
     timestamp: DateTime<Utc>,
@@ -16,6 +17,7 @@ impl ActivityData {
     fn new() -> ActivityData {
         ActivityData {
             sport: String::from("unknown"),
+            sport_name: String::from("unknown"),
             sub_sport: String::from("unknown"),
             workout_name: String::from("unknown"),
             timestamp: chrono::Utc.ymd(1970, 1, 1).and_hms(0, 0, 0),
@@ -27,6 +29,7 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
     // first define the mappings as slice for better visibility ...
     let mappings = &[
         &["$s", activity_data.sport.as_str()],
+        &["$n", activity_data.sport_name.as_str()],
         &["$S", activity_data.sub_sport.as_str()],
         &["$w", activity_data.workout_name.as_str()],
     ];
@@ -91,6 +94,17 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
             fitparser::profile::field_types::MesgNum::Sport => {
                 for field in data.fields() {
                     match field.name() {
+                        "name" => match &field.value() {
+                            fitparser::Value::String(val) => {
+                                activity_data.sport_name = val.to_string();
+                            }
+                            &_ => {
+                                return Err(format!(
+                                    "Unexpected value in enum fitparser::Value in '{}'",
+                                    path.display()
+                                ))
+                            }
+                        },
                         "sport" => match &field.value() {
                             fitparser::Value::String(val) => {
                                 activity_data.sport = val.to_string();
@@ -173,9 +187,10 @@ directory.
 For expanding the timestamp of the workout all conversions of strftime() are
 supported. In addition to those the converstion the following FIT file specific
 conversions are supported:
-  $s  Sport type
-  $S  Sport subtype, 'unknown' if not available.
-  $w  Workout name, 'unknown' if not available.")
+  $s  sport type, 'unknown' if not available.
+  $n  sport name, 'unknown' if not available.
+  $S  sport subtype, 'unknown' if not available.
+  $w  workout name, 'unknown' if not available.")
         )
         .arg(
             Arg::with_name("move")
