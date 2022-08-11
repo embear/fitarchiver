@@ -26,6 +26,8 @@ impl ActivityData {
 }
 
 fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> String {
+    // the following code is not the most efficient one but makes the mappings obvious
+
     // first define the mappings as slice for better visibility ...
     let mappings = &[
         &["$s", activity_data.sport.as_str()],
@@ -34,7 +36,7 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
         &["$w", activity_data.workout_name.as_str()],
     ];
 
-    // then convert the slice to the required vectors
+    // ... then convert the slice to the required vectors
     let mut placeholders: Vec<&str> = vec![];
     let mut substitutions: Vec<&str> = vec![];
     for mapping in mappings {
@@ -303,4 +305,77 @@ fn main() -> ExitCode {
     };
 
     ExitCode::SUCCESS
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_expand_formatstring() {
+        let mut activity_data = ActivityData::new();
+
+        // empty format string
+        assert_eq!(String::from(""), expand_formatstring("", &activity_data));
+
+        // default format string
+        assert_eq!(
+            String::from("1970/01/1970-01-01-000000-unknown"),
+            expand_formatstring("%Y/%m/%Y-%m-%d-%H%M%S-$s", &activity_data)
+        );
+
+        // single activity data
+        assert_eq!(
+            String::from("unknown"),
+            expand_formatstring("$s", &activity_data)
+        );
+        assert_eq!(
+            String::from("unknown"),
+            expand_formatstring("$n", &activity_data)
+        );
+        assert_eq!(
+            String::from("unknown"),
+            expand_formatstring("$S", &activity_data)
+        );
+        assert_eq!(
+            String::from("unknown"),
+            expand_formatstring("$w", &activity_data)
+        );
+
+        // change activity data
+        activity_data.sport = String::from("running");
+        activity_data.sport_name = String::from("training");
+        activity_data.sub_sport = String::from("trail");
+        activity_data.workout_name = String::from("interval");
+        activity_data.timestamp = Utc.ymd(2014, 7, 8).and_hms(9, 10, 11);
+
+        // default format string
+        assert_eq!(
+            String::from("2014/07/2014-07-08-091011-running"),
+            expand_formatstring("%Y/%m/%Y-%m-%d-%H%M%S-$s", &activity_data)
+        );
+
+        assert_eq!(
+            String::from("running"),
+            expand_formatstring("$s", &activity_data)
+        );
+        assert_eq!(
+            String::from("training"),
+            expand_formatstring("$n", &activity_data)
+        );
+        assert_eq!(
+            String::from("trail"),
+            expand_formatstring("$S", &activity_data)
+        );
+        assert_eq!(
+            String::from("interval"),
+            expand_formatstring("$w", &activity_data)
+        );
+
+        // repeated templates
+        assert_eq!(
+            String::from("running-running-running-running"),
+            expand_formatstring("$s-$s-$s-$s", &activity_data)
+        );
+    }
 }
