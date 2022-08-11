@@ -2,6 +2,7 @@ use aho_corasick::AhoCorasick;
 use chrono::{DateTime, TimeZone, Utc};
 use clap::{Arg, Command};
 use std::fs::{self, File};
+use std::path::Path;
 use std::process::ExitCode;
 
 struct ActivityData {
@@ -45,19 +46,19 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
         .to_string()
 }
 
-fn parse_fit_file(filename: &str) -> Result<ActivityData, String> {
+fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
     let mut activity_data = ActivityData::new();
 
     // open FIT file
-    let mut fp = match File::open(filename) {
+    let mut fp = match File::open(path) {
         Ok(fp) => fp,
-        Err(_err) => return Err(format!("Unable to open '{}'", filename)),
+        Err(_err) => return Err(format!("Unable to open '{}'", path.display())),
     };
 
     // parse FIT file to data structure
     let parsed_data = match fitparser::from_reader(&mut fp) {
         Ok(parsed_data) => parsed_data,
-        Err(_err) => return Err(format!("Unable to parse '{}'", filename)),
+        Err(_err) => return Err(format!("Unable to parse '{}'", path.display())),
     };
 
     // iterate over all data elements
@@ -74,7 +75,7 @@ fn parse_fit_file(filename: &str) -> Result<ActivityData, String> {
                             &_ => {
                                 return Err(format!(
                                     "Unexpected value in enum fitparser::Value in '{}'",
-                                    filename
+                                    path.display()
                                 ))
                             }
                         },
@@ -94,7 +95,7 @@ fn parse_fit_file(filename: &str) -> Result<ActivityData, String> {
                             &_ => {
                                 return Err(format!(
                                     "Unexpected value in enum fitparser::Value in '{}'",
-                                    filename
+                                    path.display()
                                 ))
                             }
                         },
@@ -105,7 +106,7 @@ fn parse_fit_file(filename: &str) -> Result<ActivityData, String> {
                             &_ => {
                                 return Err(format!(
                                     "Unexpected value in enum fitparser::Value in '{}'",
-                                    filename
+                                    path.display()
                                 ))
                             }
                         },
@@ -135,22 +136,13 @@ fn parse_arguments() -> clap::ArgMatches {
                 .help("Base directory where the archive is created"),
         )
         .arg(
-            Arg::with_name("filename_format")
-                .short('F')
-                .long("file-format")
+            Arg::with_name("file_template")
+                .short('f')
+                .long("file-template")
                 .takes_value(true)
-                .value_name("format string")
-                .default_value("%Y-%m-%d-%H%M%S-$s")
-                .help("Format string defining the name of the archive file"),
-        )
-        .arg(
-            Arg::with_name("directory_format")
-                .short('D')
-                .long("directory-format")
-                .takes_value(true)
-                .value_name("format string")
-                .default_value("%Y/%m")
-                .help("Format string defining the path of the archive directory"),
+                .value_name("template string")
+                .default_value("%Y/%m/%Y-%m-%d-%H%M%S-$s")
+                .help("Format string defining the path and name of the archive file in the destination directory"),
         )
         .arg(
             Arg::with_name("move")
@@ -173,77 +165,72 @@ fn process_files(options: clap::ArgMatches) -> Result<String, String> {
     let mut file_counter: u16 = 0;
     let mut error_counter: u16 = 0;
 
-    let destination = options.value_of("directory").unwrap();
-    let filenames: Vec<&str> = options.values_of("files").unwrap().collect();
+    let base_directory = Path::new(options.value_of("directory").unwrap());
+    let files: Vec<&str> = options.values_of("files").unwrap().collect();
 
-    for filename in filenames {
-        match parse_fit_file(filename) {
+    for file in files {
+        let source_path = Path::new(file);
+        match parse_fit_file(source_path) {
             Ok(val) => {
-                let archive_path = format!(
-                    "{}/{}",
-                    destination,
-                    expand_formatstring(options.value_of("directory_format").unwrap(), &val)
-                );
-                let archive_file = format!(
-                    "{}/{}.fit",
-                    archive_path,
-                    expand_formatstring(options.value_of("filename_format").unwrap(), &val)
-                );
+                let archive_path = base_directory
+                    .join(expand_formatstring(
+                        options.value_of("file_template").unwrap(),
+                        &val,
+                    ))
+                    .with_extension("fit");
 
-                // Check if destination exists and is a directory, create it if needed
-                match fs::metadata(&archive_path) {
+                // check if destination exists and is a directory, create it if needed
+                let parent = archive_path.parent().unwrap();
+                match fs::metadata(parent) {
                     Ok(val) => {
                         if !val.is_dir() {
                             return Err(format!(
                                 "'{}' exists but is not a directory",
-                                archive_path
+                                parent.display()
                             ));
                         }
                     }
                     Err(_) => {
-                        print!("Creating directory '{}' ... ", archive_path);
-                        match fs::create_dir_all(&archive_path) {
+                        print!("Creating directory '{}' ... ", parent.display());
+                        match fs::create_dir_all(&parent) {
                             Ok(_) => println!("done"),
                             Err(_) => {
                                 return Err(format!(
                                     "Unable to create archive directory '{}'",
-                                    archive_path
+                                    parent.display()
                                 ))
                             }
                         }
                     }
                 }
 
-                // Archiving files
-                if options.is_present("move") {
-                    print!("Moving '{}' -> '{}' ... ", filename, archive_file);
-                    match fs::copy(&filename, &archive_file) {
-                        Ok(_) => match fs::remove_file(&filename) {
-                            Ok(_) => {
-                                println!("done");
-                                file_counter += 1;
+                // archiving files
+                print!(
+                    "'{}' -> '{}' ... ",
+                    source_path.display(),
+                    archive_path.display()
+                );
+                match fs::copy(&source_path, &archive_path) {
+                    Ok(_) => {
+                        if options.is_present("move") {
+                            match fs::remove_file(&source_path) {
+                                Ok(_) => {
+                                    println!("moved");
+                                    file_counter += 1;
+                                }
+                                Err(_) => {
+                                    println!("Unable to remove file '{}'", source_path.display());
+                                    error_counter += 1;
+                                }
                             }
-                            Err(_) => {
-                                println!("Unable to remove file '{}'", filename);
-                                error_counter += 1;
-                            }
-                        },
-                        Err(_) => {
-                            println!("Unable to create file '{}'", archive_file);
-                            error_counter += 1;
-                        }
-                    }
-                } else {
-                    print!("Copying '{}' -> '{}' ... ", filename, archive_file);
-                    match fs::copy(&filename, &archive_file) {
-                        Ok(_) => {
-                            println!("done");
+                        } else {
+                            println!("copied");
                             file_counter += 1;
                         }
-                        Err(_) => {
-                            println!("Unable to create file '{}'", archive_file);
-                            error_counter += 1;
-                        }
+                    }
+                    Err(_) => {
+                        println!("Unable to create file '{}'", archive_path.display());
+                        error_counter += 1;
                     }
                 }
             }
