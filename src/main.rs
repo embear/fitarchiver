@@ -8,6 +8,7 @@ use std::process::ExitCode;
 struct ActivityData {
     sport: String,
     sub_sport: String,
+    workout_name: String,
     timestamp: DateTime<Utc>,
 }
 
@@ -16,6 +17,7 @@ impl ActivityData {
         ActivityData {
             sport: String::from("unknown"),
             sub_sport: String::from("unknown"),
+            workout_name: String::from("unknown"),
             timestamp: chrono::Utc.ymd(1970, 1, 1).and_hms(0, 0, 0),
         }
     }
@@ -26,6 +28,7 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
     let mappings = &[
         &["$s", activity_data.sport.as_str()],
         &["$S", activity_data.sub_sport.as_str()],
+        &["$w", activity_data.workout_name.as_str()],
     ];
 
     // then convert the slice to the required vectors
@@ -114,6 +117,27 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                     }
                 }
             }
+
+            // extract the wkt_name of the activity
+            fitparser::profile::field_types::MesgNum::Workout => {
+                for field in data.fields() {
+                    match field.name() {
+                        "wkt_name" => match &field.value() {
+                            fitparser::Value::String(val) => {
+                                activity_data.workout_name = val.to_string();
+                            }
+                            &_ => {
+                                return Err(format!(
+                                    "Unexpected value in enum fitparser::Value in '{}'",
+                                    path.display()
+                                ))
+                            }
+                        },
+                        &_ => (), // ignore all other values
+                    }
+                }
+            }
+
             _ => (), // ignore all other values
         }
     }
