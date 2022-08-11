@@ -1,3 +1,9 @@
+//! # FIT file archiver
+//!
+//! `fitarchiver` is a tool to copy or move FIT files based on information contained in the file.
+
+#![warn(missing_docs)]
+
 use aho_corasick::AhoCorasick;
 use chrono::{DateTime, TimeZone, Utc};
 use clap::{Arg, Command};
@@ -5,15 +11,22 @@ use std::fs::{self, File};
 use std::path::Path;
 use std::process::ExitCode;
 
+/// Information extracted from a FIT file
 struct ActivityData {
+    /// Sport type, i.e. "running"
     sport: String,
+    /// Sport name, i.e. "trail_run" (Name of the activity started on the watch)
     sport_name: String,
+    /// Sport sub type, i.e. "trail"
     sub_sport: String,
+    /// Workout name, i.e. "Temporun 8km"
     workout_name: String,
+    /// UTC timestamp of activity start
     timestamp: DateTime<Utc>,
 }
 
 impl ActivityData {
+    /// Returns an initialized activity data structure with default values
     fn new() -> ActivityData {
         ActivityData {
             sport: String::from("unknown"),
@@ -25,6 +38,15 @@ impl ActivityData {
     }
 }
 
+/// Returns an expanded format string with '%' and '$' replaced
+///
+/// '%' placeholders are expanded using the timestamp of the acticity data. The '$' placeholders
+/// are expanded using other data from the activity.
+///
+/// # Arguments
+///
+/// * `formatstring` - A format string containing '%' and '$' placeholders.
+/// * `activity_data` - Data that will be used for expansion of the templates.
 fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> String {
     // the following code is not the most efficient one but makes the mappings obvious
 
@@ -54,6 +76,11 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
         .to_string()
 }
 
+/// Returns activity data extracted from given FIT file
+///
+/// # Arguments
+///
+/// * `path` - Path of the FIT file
 fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
     let mut activity_data = ActivityData::new();
 
@@ -165,6 +192,7 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
     Ok(activity_data)
 }
 
+/// Returns matched command line arguments
 fn parse_arguments() -> clap::ArgMatches {
     Command::new("FIT file archiver")
         .version(env!("CARGO_PKG_VERSION"))
@@ -190,8 +218,8 @@ fn parse_arguments() -> clap::ArgMatches {
                 .long_help(
 "Format string defining the path and name of the archive file in the destination
 directory.
-For expanding the timestamp of the workout all conversions of strftime() are
-supported. In addition to those the converstion the following FIT file specific
+For expanding the timestamp of the workout all placeholders of strftime() are
+supported. In addition to those the placeholders the following FIT file specific
 conversions are supported:
   $s  sport type, 'unknown' if not available.
   $n  sport name, 'unknown' if not available.
@@ -215,7 +243,12 @@ conversions are supported:
         .get_matches()
 }
 
-fn process_files(options: clap::ArgMatches) -> Result<String, String> {
+/// Archive files
+///
+/// # Arguments
+///
+/// `options` - Command line options.
+fn archive_files(options: clap::ArgMatches) -> Result<String, String> {
     let mut file_counter: u16 = 0;
     let mut error_counter: u16 = 0;
 
@@ -299,7 +332,7 @@ fn process_files(options: clap::ArgMatches) -> Result<String, String> {
 }
 
 fn main() -> ExitCode {
-    match process_files(parse_arguments()) {
+    match archive_files(parse_arguments()) {
         Ok(val) => println!("{}", val),
         Err(val) => eprintln!("{}", val),
     };
@@ -312,6 +345,7 @@ mod tests {
     use super::*;
 
     #[test]
+    /// Test format string expansion
     fn test_expand_formatstring() {
         let mut activity_data = ActivityData::new();
 
