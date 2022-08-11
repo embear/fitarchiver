@@ -166,7 +166,16 @@ fn parse_arguments() -> clap::ArgMatches {
                 .takes_value(true)
                 .value_name("template string")
                 .default_value("%Y/%m/%Y-%m-%d-%H%M%S-$s")
-                .help("Format string defining the path and name of the archive file in the destination directory"),
+                .help("Format string defining the path and name of the archive file in the destination directory.")
+                .long_help(
+"Format string defining the path and name of the archive file in the destination
+directory.
+For expanding the timestamp of the workout all conversions of strftime() are
+supported. In addition to those the converstion the following FIT file specific
+conversions are supported:
+  $s  Sport type
+  $S  Sport subtype, 'unknown' if not available.
+  $w  Workout name, 'unknown' if not available.")
         )
         .arg(
             Arg::with_name("move")
