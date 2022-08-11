@@ -219,7 +219,7 @@ fn process_files(options: clap::ArgMatches) -> Result<String, String> {
                                     file_counter += 1;
                                 }
                                 Err(_) => {
-                                    println!("Unable to remove file '{}'", source_path.display());
+                                    eprintln!("Unable to remove file '{}'", source_path.display());
                                     error_counter += 1;
                                 }
                             }
@@ -229,12 +229,12 @@ fn process_files(options: clap::ArgMatches) -> Result<String, String> {
                         }
                     }
                     Err(_) => {
-                        println!("Unable to create file '{}'", archive_path.display());
+                        eprintln!("Unable to create file '{}'", archive_path.display());
                         error_counter += 1;
                     }
                 }
             }
-            Err(msg) => println!("{}", msg),
+            Err(msg) => eprintln!("{}", msg),
         };
     }
 
@@ -247,7 +247,7 @@ fn process_files(options: clap::ArgMatches) -> Result<String, String> {
 fn main() -> ExitCode {
     match process_files(parse_arguments()) {
         Ok(val) => println!("{}", val),
-        Err(val) => println!("{}", val),
+        Err(val) => eprintln!("{}", val),
     };
 
     ExitCode::SUCCESS
