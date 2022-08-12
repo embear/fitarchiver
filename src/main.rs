@@ -59,12 +59,8 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
     ];
 
     // ... then convert the slice to the required vectors
-    let mut tags: Vec<&str> = vec![];
-    let mut substitutions: Vec<&str> = vec![];
-    for mapping in mappings {
-        tags.push(mapping[0]);
-        substitutions.push(mapping[1]);
-    }
+    let tags: Vec<&str> = mappings.iter().map(|x| x[0]).collect();
+    let substitutions: Vec<&str> = mappings.iter().map(|x| x[1]).collect();
 
     // replace all '$' tags with their substitutions (activity)
     let result = AhoCorasick::new(tags).replace_all(formatstring, &substitutions);
