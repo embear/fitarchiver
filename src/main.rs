@@ -51,11 +51,11 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
     // the following code is not the most efficient one but makes the mappings obvious
 
     // first define the mappings as slice for better visibility ...
-    let mappings = &[
-        &["$s", activity_data.sport.as_str()],
-        &["$n", activity_data.sport_name.as_str()],
-        &["$S", activity_data.sub_sport.as_str()],
-        &["$w", activity_data.workout_name.as_str()],
+    let mappings = [
+        ["$s", activity_data.sport.as_str()],
+        ["$n", activity_data.sport_name.as_str()],
+        ["$S", activity_data.sub_sport.as_str()],
+        ["$w", activity_data.workout_name.as_str()],
     ];
 
     // ... then convert the slice to the required vectors
@@ -252,7 +252,7 @@ conversions are supported:
 /// # Arguments
 ///
 /// `options` - Command line options.
-fn archive_files(options: clap::ArgMatches) -> Result<String, String> {
+fn archive_files(options: &clap::ArgMatches) -> Result<String, String> {
     let mut file_counter: u16 = 0;
     let mut error_counter: u16 = 0;
 
@@ -336,7 +336,7 @@ fn archive_files(options: clap::ArgMatches) -> Result<String, String> {
 }
 
 fn main() -> ExitCode {
-    match archive_files(parse_arguments()) {
+    match archive_files(&parse_arguments()) {
         Ok(val) => println!("{}", val),
         Err(val) => eprintln!("{}", val),
     };
