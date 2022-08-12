@@ -13,13 +13,13 @@ use std::process::ExitCode;
 
 /// Information extracted from a FIT file
 struct ActivityData {
-    /// Sport type, i.e. "running"
+    /// Sport type, i.e. 'running'
     sport: String,
-    /// Sport name, i.e. "trail_run" (Name of the activity started on the watch)
+    /// Sport name, i.e. 'trail_run' (Name of the activity started on the watch)
     sport_name: String,
-    /// Sport sub type, i.e. "trail"
+    /// Sport sub type, i.e. 'trail'
     sub_sport: String,
-    /// Workout name, i.e. "Temporun 8km"
+    /// Workout name, i.e. 'Temporun 8km'
     workout_name: String,
     /// UTC timestamp of activity start
     timestamp: DateTime<Utc>,
@@ -40,12 +40,12 @@ impl ActivityData {
 
 /// Returns an expanded format string with '%' and '$' replaced
 ///
-/// '%' placeholders are expanded using the timestamp of the acticity data. The '$' placeholders
+/// '%' tag are expanded using the timestamp of the acticity data. The '$' tag
 /// are expanded using other data from the activity.
 ///
 /// # Arguments
 ///
-/// * `formatstring` - A format string containing '%' and '$' placeholders.
+/// * `formatstring` - A format string containing '%' and '$' tags.
 /// * `activity_data` - Data that will be used for expansion of the templates.
 fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> String {
     // the following code is not the most efficient one but makes the mappings obvious
@@ -59,17 +59,17 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
     ];
 
     // ... then convert the slice to the required vectors
-    let mut placeholders: Vec<&str> = vec![];
+    let mut tags: Vec<&str> = vec![];
     let mut substitutions: Vec<&str> = vec![];
     for mapping in mappings {
-        placeholders.push(mapping[0]);
+        tags.push(mapping[0]);
         substitutions.push(mapping[1]);
     }
 
-    // replace all '$' placeholders with their substitutions (activity)
-    let result = AhoCorasick::new(placeholders).replace_all(formatstring, &substitutions);
+    // replace all '$' tags with their substitutions (activity)
+    let result = AhoCorasick::new(tags).replace_all(formatstring, &substitutions);
 
-    // replace all '%' placeholders with their substitions (timestamp)
+    // replace all '%' tags with their substitions (timestamp)
     activity_data
         .timestamp
         .format(&result.to_string())
@@ -203,9 +203,10 @@ fn parse_arguments() -> clap::ArgMatches {
                 .short('d')
                 .long("directory")
                 .takes_value(true)
-                .value_name("base directory")
+                .value_name("archive directory")
                 .default_value(".")
-                .help("Base directory where the archive is created"),
+                .help("Archive base directory.")
+                .long_help("Base directory where the archive is created."),
         )
         .arg(
             Arg::with_name("file_template")
@@ -214,31 +215,34 @@ fn parse_arguments() -> clap::ArgMatches {
                 .takes_value(true)
                 .value_name("template string")
                 .default_value("%Y/%m/%Y-%m-%d-%H%M%S-$s")
-                .help("Format string defining the path and name of the archive file in the destination directory.")
+                .help("Format string defining the path and name of the archive file in the archive directory.")
                 .long_help(
-"Format string defining the path and name of the archive file in the destination
-directory.
-For expanding the timestamp of the workout all placeholders of strftime() are
-supported. In addition to those the placeholders the following FIT file specific
+"Format string defining the path and name of the archive file inside the
+archive directory.
+For expanding the timestamp of the workout all tags of strftime() are
+supported. In addition to those the tags the following FIT file specific
 conversions are supported:
-  $s  sport type, 'unknown' if not available.
-  $n  sport name, 'unknown' if not available.
-  $S  sport subtype, 'unknown' if not available.
-  $w  workout name, 'unknown' if not available.")
+
+  Tag   Description     Example          Default
+  ------------------------------------------------
+  $s    sport type      'running'        'unknown'
+  $S    sport subtype   'trail'          'unknown'
+  $n    sport name      'trail_run'      'unknown'
+  $w    workout name    'temporun_8km'   'unknown'")
         )
         .arg(
             Arg::with_name("move")
                 .short('m')
                 .long("move")
                 .takes_value(false)
-                .help("Move instead of copying files to archive"),
+                .help("Move files to archive instead of copying them."),
         )
         .arg(
             Arg::with_name("files")
                 .multiple(true)
                 .value_name("files")
                 .required(true)
-                .help("FIT files to archive"),
+                .help("List of FIT files to archive."),
         )
         .get_matches()
 }
