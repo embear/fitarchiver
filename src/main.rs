@@ -250,12 +250,99 @@ conversions are supported:
         .get_matches()
 }
 
-/// Archive files
+/// Create directory for archive file.
+///
+/// # Arguments
+///
+/// `archive_path` - Path to the archive file.
+/// `options` - Command line options.
+fn create_archive_directory(
+    archive_path: &Path,
+    options: &clap::ArgMatches,
+) -> Result<String, String> {
+    // check if destination exists and is a directory, create it if needed
+    let parent = archive_path.parent().unwrap();
+    match fs::metadata(parent) {
+        Ok(val) => {
+            if !val.is_dir() {
+                return Err(format!(
+                    "'{}' exists but is not a directory",
+                    parent.display()
+                ));
+            }
+        }
+        Err(_) => {
+            if !options.is_present("dry-run") {
+                match fs::create_dir_all(&parent) {
+                    Ok(_) => (),
+                    Err(_) => {
+                        return Err(format!(
+                            "Unable to create archive directory '{}'",
+                            parent.display()
+                        ))
+                    }
+                }
+            }
+        }
+    }
+    Ok(String::from("OK"))
+}
+
+/// Move or copy files
+///
+/// # Arguments
+///
+/// `source_path` - Path to the source file.
+/// `archive_path` - Path to the archive file.
+/// `options` - Command line options.
+fn archive_file(
+    source_path: &Path,
+    archive_path: &Path,
+    options: &clap::ArgMatches,
+) -> Result<String, String> {
+    let mut msg = format!(
+        "'{}' -> '{}' ... ",
+        source_path.display(),
+        archive_path.display()
+    );
+    if !options.is_present("dry-run") {
+        match fs::copy(source_path, &archive_path) {
+            Ok(_) => {
+                if options.is_present("move") {
+                    match fs::remove_file(source_path) {
+                        Ok(_) => {
+                            msg.push_str("moved");
+                        }
+                        Err(_) => {
+                            return Err(format!(
+                                "Unable to remove file '{}'",
+                                source_path.display()
+                            ));
+                        }
+                    }
+                } else {
+                    msg.push_str("copied");
+                }
+            }
+            Err(_) => {
+                return Err(format!(
+                    "Unable to create file '{}'",
+                    archive_path.display()
+                ));
+            }
+        };
+    } else {
+        msg.push_str("dry run");
+    }
+    Ok(msg)
+}
+
+/// Process all FIT files
 ///
 /// # Arguments
 ///
 /// `options` - Command line options.
-fn archive_files(options: &clap::ArgMatches) -> Result<String, String> {
+fn process_files(options: &clap::ArgMatches) -> Result<String, String> {
     let mut file_counter: u16 = 0;
     let mut error_counter: u16 = 0;
 
@@ -273,70 +360,18 @@ fn archive_files(options: &clap::ArgMatches) -> Result<String, String> {
                     ))
                     .with_extension("fit");
 
-                // check if destination exists and is a directory, create it if needed
-                let parent = archive_path.parent().unwrap();
-                match fs::metadata(parent) {
-                    Ok(val) => {
-                        if !val.is_dir() {
-                            return Err(format!(
-                                "'{}' exists but is not a directory",
-                                parent.display()
-                            ));
+                match create_archive_directory(&archive_path, options) {
+                    Ok(_) => match archive_file(source_path, &archive_path, options) {
+                        Ok(msg) => {
+                            println!("{}", msg);
+                            file_counter += 1;
                         }
-                    }
-                    Err(_) => {
-                        print!("Creating directory '{}' ... ", parent.display());
-                        if !options.is_present("dry-run") {
-                            match fs::create_dir_all(&parent) {
-                                Ok(_) => println!("done"),
-                                Err(_) => {
-                                    return Err(format!(
-                                        "Unable to create archive directory '{}'",
-                                        parent.display()
-                                    ))
-                                }
-                            };
-                        } else {
-                            println!("simulated");
-                        }
-                    }
-                }
-
-                // archiving files
-                print!(
-                    "'{}' -> '{}' ... ",
-                    source_path.display(),
-                    archive_path.display()
-                );
-                if !options.is_present("dry-run") {
-                    match fs::copy(&source_path, &archive_path) {
-                        Ok(_) => {
-                            if options.is_present("move") {
-                                match fs::remove_file(&source_path) {
-                                    Ok(_) => {
-                                        println!("moved");
-                                        file_counter += 1;
-                                    }
-                                    Err(_) => {
-                                        eprintln!(
-                                            "Unable to remove file '{}'",
-                                            source_path.display()
-                                        );
-                                        error_counter += 1;
-                                    }
-                                }
-                            } else {
-                                println!("copied");
-                                file_counter += 1;
-                            }
-                        }
-                        Err(_) => {
-                            eprintln!("Unable to create file '{}'", archive_path.display());
+                        Err(msg) => {
+                            eprintln!("{}", msg);
                             error_counter += 1;
                         }
-                    };
-                } else {
-                    println!("simulated");
+                    },
+                    Err(e) => return Err(e),
                 }
             }
             Err(msg) => eprintln!("{}", msg),
@@ -350,9 +385,9 @@ fn archive_files(options: &clap::ArgMatches) -> Result<String, String> {
 }
 
 fn main() -> ExitCode {
-    match archive_files(&parse_arguments()) {
+    match process_files(&parse_arguments()) {
         Ok(val) => println!("{}", val),
-        Err(val) => eprintln!("{}", val),
+        Err(val) => eprintln!("ERROR: {}", val),
     };
 
     ExitCode::SUCCESS
