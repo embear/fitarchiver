@@ -405,41 +405,14 @@ mod tests {
     #[test]
     /// Test format string expansion
     fn test_expand_formatstring() {
-        let mut activity_data = ActivityData::new();
-
-        // empty format string
-        assert_eq!(String::from(""), expand_formatstring("", &activity_data));
-
-        // default format string
-        assert_eq!(
-            String::from("1970/01/1970-01-01-000000-unknown"),
-            expand_formatstring("%Y/%m/%Y-%m-%d-%H%M%S-$s", &activity_data)
-        );
-
-        // single activity data
-        assert_eq!(
-            String::from("unknown"),
-            expand_formatstring("$s", &activity_data)
-        );
-        assert_eq!(
-            String::from("unknown"),
-            expand_formatstring("$n", &activity_data)
-        );
-        assert_eq!(
-            String::from("unknown"),
-            expand_formatstring("$S", &activity_data)
-        );
-        assert_eq!(
-            String::from("unknown"),
-            expand_formatstring("$w", &activity_data)
-        );
-
-        // change activity data
-        activity_data.sport = String::from("running");
-        activity_data.sport_name = String::from("training");
-        activity_data.sub_sport = String::from("trail");
-        activity_data.workout_name = String::from("interval");
-        activity_data.timestamp = Utc.ymd(2014, 7, 8).and_hms(9, 10, 11);
+        // setup activity data
+        let activity_data = ActivityData {
+            sport: String::from("running"),
+            sport_name: String::from("training"),
+            sub_sport: String::from("trail"),
+            workout_name: String::from("interval"),
+            timestamp: Utc.ymd(2014, 7, 8).and_hms(9, 10, 11),
+        };
 
         // default format string
         assert_eq!(
@@ -447,6 +420,7 @@ mod tests {
             expand_formatstring("%Y/%m/%Y-%m-%d-%H%M%S-$s", &activity_data)
         );
 
+        // single tags
         assert_eq!(
             String::from("running"),
             expand_formatstring("$s", &activity_data)
@@ -464,7 +438,7 @@ mod tests {
             expand_formatstring("$w", &activity_data)
         );
 
-        // repeated templates
+        // repeated tags
         assert_eq!(
             String::from("running-running-running-running"),
             expand_formatstring("$s-$s-$s-$s", &activity_data)
