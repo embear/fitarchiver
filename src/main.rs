@@ -472,6 +472,43 @@ mod tests {
     }
 
     #[test]
+    fn test_directory_create() {
+        let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = dir.path().join("source_dir").join("source.fit");
+        let archive_path = dir.path().join("archive_dir").join("archive.fit");
+
+        let options = parse_arguments(Some(vec![
+            "fitarchiver",
+            "-d",
+            archive_path.parent().unwrap().as_os_str().to_str().unwrap(),
+            source_path.as_os_str().to_str().unwrap(),
+        ]));
+
+        assert_eq!(false, archive_path.parent().unwrap().exists());
+        create_archive_directory(&archive_path, &options).expect("error during creating directory");
+        assert_eq!(true, archive_path.parent().unwrap().exists());
+    }
+
+    #[test]
+    fn test_directory_create_dry_run() {
+        let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = dir.path().join("source_dir").join("source.fit");
+        let archive_path = dir.path().join("archive_dir").join("archive.fit");
+
+        let options = parse_arguments(Some(vec![
+            "fitarchiver",
+            "-n",
+            "-d",
+            archive_path.parent().unwrap().as_os_str().to_str().unwrap(),
+            source_path.as_os_str().to_str().unwrap(),
+        ]));
+
+        assert_eq!(false, archive_path.parent().unwrap().exists());
+        create_archive_directory(&archive_path, &options).expect("error during creating directory");
+        assert_eq!(false, archive_path.parent().unwrap().exists());
+    }
+
+    #[test]
     /// Test dry run
     fn test_archive_dry_run() {
         let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
