@@ -10,4 +10,6 @@ aho-corasick = "0.7.18"
 chrono = "0.4.19"
 clap = "3.2.16"
 fitparser = "0.5.0"
+
+[dev-dependencies]
 tempdir = "0.3.7"
