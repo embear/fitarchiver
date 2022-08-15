@@ -234,6 +234,13 @@ conversions are supported:
                 .help("Move files to archive instead of copying them."),
         )
         .arg(
+            Arg::with_name("dry-run")
+                .short('n')
+                .long("dry-run")
+                .takes_value(false)
+                .help("Do not copy or move the files, just show what will happen."),
+        )
+        .arg(
             Arg::with_name("files")
                 .multiple(true)
                 .value_name("files")
@@ -279,14 +286,18 @@ fn archive_files(options: &clap::ArgMatches) -> Result<String, String> {
                     }
                     Err(_) => {
                         print!("Creating directory '{}' ... ", parent.display());
-                        match fs::create_dir_all(&parent) {
-                            Ok(_) => println!("done"),
-                            Err(_) => {
-                                return Err(format!(
-                                    "Unable to create archive directory '{}'",
-                                    parent.display()
-                                ))
-                            }
+                        if !options.is_present("dry-run") {
+                            match fs::create_dir_all(&parent) {
+                                Ok(_) => println!("done"),
+                                Err(_) => {
+                                    return Err(format!(
+                                        "Unable to create archive directory '{}'",
+                                        parent.display()
+                                    ))
+                                }
+                            };
+                        } else {
+                            println!("simulated");
                         }
                     }
                 }
@@ -297,28 +308,35 @@ fn archive_files(options: &clap::ArgMatches) -> Result<String, String> {
                     source_path.display(),
                     archive_path.display()
                 );
-                match fs::copy(&source_path, &archive_path) {
-                    Ok(_) => {
-                        if options.is_present("move") {
-                            match fs::remove_file(&source_path) {
-                                Ok(_) => {
-                                    println!("moved");
-                                    file_counter += 1;
+                if !options.is_present("dry-run") {
+                    match fs::copy(&source_path, &archive_path) {
+                        Ok(_) => {
+                            if options.is_present("move") {
+                                match fs::remove_file(&source_path) {
+                                    Ok(_) => {
+                                        println!("moved");
+                                        file_counter += 1;
+                                    }
+                                    Err(_) => {
+                                        eprintln!(
+                                            "Unable to remove file '{}'",
+                                            source_path.display()
+                                        );
+                                        error_counter += 1;
+                                    }
                                 }
-                                Err(_) => {
-                                    eprintln!("Unable to remove file '{}'", source_path.display());
-                                    error_counter += 1;
-                                }
+                            } else {
+                                println!("copied");
+                                file_counter += 1;
                             }
-                        } else {
-                            println!("copied");
-                            file_counter += 1;
                         }
-                    }
-                    Err(_) => {
-                        eprintln!("Unable to create file '{}'", archive_path.display());
-                        error_counter += 1;
-                    }
+                        Err(_) => {
+                            eprintln!("Unable to create file '{}'", archive_path.display());
+                            error_counter += 1;
+                        }
+                    };
+                } else {
+                    println!("simulated");
                 }
             }
             Err(msg) => eprintln!("{}", msg),
