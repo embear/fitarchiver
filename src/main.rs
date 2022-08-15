@@ -400,6 +400,7 @@ fn main() -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempdir::TempDir;
 
     #[test]
     /// Test format string expansion
@@ -468,5 +469,103 @@ mod tests {
             String::from("running-running-running-running"),
             expand_formatstring("$s-$s-$s-$s", &activity_data)
         );
+    }
+
+    #[test]
+    /// Test dry run
+    fn test_archive_dry_run() {
+        let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = dir.path().join("source_dir").join("source.fit");
+        let archive_path = dir.path().join("archive_dir").join("archive.fit");
+
+        {
+            // put file creation into a separate scope so the file is closed for the actual test
+            fs::create_dir_all(&source_path.parent().unwrap())
+                .expect("error during creating temporary archive directory");
+            fs::create_dir_all(&archive_path.parent().unwrap())
+                .expect("error during creating temporary archive directory");
+            File::create(&source_path).expect("unable to create test file");
+        }
+
+        let options = parse_arguments(Some(vec![
+            "fitarchiver",
+            "-n",
+            "-d",
+            archive_path.parent().unwrap().as_os_str().to_str().unwrap(),
+            "-f",
+            "archive",
+            source_path.as_os_str().to_str().unwrap(),
+        ]));
+
+        assert_eq!(true, source_path.exists());
+        assert_eq!(false, archive_path.exists());
+        archive_file(&source_path, &archive_path, &options).expect("error during archiving file");
+        assert_eq!(true, source_path.exists());
+        assert_eq!(false, archive_path.exists());
+    }
+
+    #[test]
+    /// Test copying file to archive
+    fn test_archive_copy() {
+        let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = dir.path().join("source_dir").join("source.fit");
+        let archive_path = dir.path().join("archive_dir").join("archive.fit");
+
+        {
+            // put file creation into a separate scope so the file is closed for the actual test
+            fs::create_dir_all(&source_path.parent().unwrap())
+                .expect("error during creating temporary archive directory");
+            fs::create_dir_all(&archive_path.parent().unwrap())
+                .expect("error during creating temporary archive directory");
+            File::create(&source_path).expect("unable to create test file");
+        }
+
+        let options = parse_arguments(Some(vec![
+            "fitarchiver",
+            "-d",
+            archive_path.parent().unwrap().as_os_str().to_str().unwrap(),
+            "-f",
+            "archive",
+            source_path.as_os_str().to_str().unwrap(),
+        ]));
+
+        assert_eq!(true, source_path.exists());
+        assert_eq!(false, archive_path.exists());
+        archive_file(&source_path, &archive_path, &options).expect("error during archiving file");
+        assert_eq!(true, source_path.exists());
+        assert_eq!(true, archive_path.exists());
+    }
+
+    #[test]
+    /// Test moving file to archive
+    fn test_archive_move() {
+        let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = dir.path().join("source_dir").join("source.fit");
+        let archive_path = dir.path().join("archive_dir").join("archive.fit");
+
+        {
+            // put file creation into a separate scope so the file is closed for the actual test
+            fs::create_dir_all(&source_path.parent().unwrap())
+                .expect("error during creating temporary archive directory");
+            fs::create_dir_all(&archive_path.parent().unwrap())
+                .expect("error during creating temporary archive directory");
+            File::create(&source_path).expect("unable to create test file");
+        }
+
+        let options = parse_arguments(Some(vec![
+            "fitarchiver",
+            "-m",
+            "-d",
+            archive_path.parent().unwrap().as_os_str().to_str().unwrap(),
+            "-f",
+            "archive",
+            source_path.as_os_str().to_str().unwrap(),
+        ]));
+
+        assert_eq!(true, source_path.exists());
+        assert_eq!(false, archive_path.exists());
+        archive_file(&source_path, &archive_path, &options).expect("error during archiving file");
+        assert_eq!(false, source_path.exists());
+        assert_eq!(true, archive_path.exists());
     }
 }
