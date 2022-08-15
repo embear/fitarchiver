@@ -458,9 +458,9 @@ mod tests {
             source_path.as_os_str().to_str().unwrap(),
         ]));
 
-        assert_eq!(false, archive_path.parent().unwrap().exists());
+        assert!(!archive_path.parent().unwrap().exists());
         create_archive_directory(&archive_path, &options).expect("error during creating directory");
-        assert_eq!(true, archive_path.parent().unwrap().exists());
+        assert!(archive_path.parent().unwrap().exists());
     }
 
     #[test]
@@ -477,9 +477,9 @@ mod tests {
             source_path.as_os_str().to_str().unwrap(),
         ]));
 
-        assert_eq!(false, archive_path.parent().unwrap().exists());
+        assert!(!archive_path.parent().unwrap().exists());
         create_archive_directory(&archive_path, &options).expect("error during creating directory");
-        assert_eq!(false, archive_path.parent().unwrap().exists());
+        assert!(!archive_path.parent().unwrap().exists());
     }
 
     #[test]
@@ -508,11 +508,11 @@ mod tests {
             source_path.as_os_str().to_str().unwrap(),
         ]));
 
-        assert_eq!(true, source_path.exists());
-        assert_eq!(false, archive_path.exists());
+        assert!(source_path.exists());
+        assert!(!archive_path.exists());
         archive_file(&source_path, &archive_path, &options).expect("error during archiving file");
-        assert_eq!(true, source_path.exists());
-        assert_eq!(false, archive_path.exists());
+        assert!(source_path.exists());
+        assert!(!archive_path.exists());
     }
 
     #[test]
@@ -540,11 +540,11 @@ mod tests {
             source_path.as_os_str().to_str().unwrap(),
         ]));
 
-        assert_eq!(true, source_path.exists());
-        assert_eq!(false, archive_path.exists());
+        assert!(source_path.exists());
+        assert!(!archive_path.exists());
         archive_file(&source_path, &archive_path, &options).expect("error during archiving file");
-        assert_eq!(true, source_path.exists());
-        assert_eq!(true, archive_path.exists());
+        assert!(source_path.exists());
+        assert!(archive_path.exists());
     }
 
     #[test]
@@ -573,10 +573,10 @@ mod tests {
             source_path.as_os_str().to_str().unwrap(),
         ]));
 
-        assert_eq!(true, source_path.exists());
-        assert_eq!(false, archive_path.exists());
+        assert!(source_path.exists());
+        assert!(!archive_path.exists());
         archive_file(&source_path, &archive_path, &options).expect("error during archiving file");
-        assert_eq!(false, source_path.exists());
-        assert_eq!(true, archive_path.exists());
+        assert!(!source_path.exists());
+        assert!(archive_path.exists());
     }
 }
