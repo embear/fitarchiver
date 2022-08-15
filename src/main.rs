@@ -446,7 +446,7 @@ mod tests {
     }
 
     #[test]
-    fn test_directory_create() {
+    fn test_create_archive_directory() {
         let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
         let source_path = dir.path().join("source_dir").join("source.fit");
         let archive_path = dir.path().join("archive_dir").join("archive.fit");
@@ -464,7 +464,7 @@ mod tests {
     }
 
     #[test]
-    fn test_directory_create_dry_run() {
+    fn test_create_archive_directory_dry_run() {
         let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
         let source_path = dir.path().join("source_dir").join("source.fit");
         let archive_path = dir.path().join("archive_dir").join("archive.fit");
@@ -484,7 +484,7 @@ mod tests {
 
     #[test]
     /// Test dry run
-    fn test_archive_dry_run() {
+    fn test_archive_file_dry_run() {
         let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
         let source_path = dir.path().join("source_dir").join("source.fit");
         let archive_path = dir.path().join("archive_dir").join("archive.fit");
@@ -517,7 +517,7 @@ mod tests {
 
     #[test]
     /// Test copying file to archive
-    fn test_archive_copy() {
+    fn test_archive_file_copy() {
         let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
         let source_path = dir.path().join("source_dir").join("source.fit");
         let archive_path = dir.path().join("archive_dir").join("archive.fit");
@@ -549,7 +549,7 @@ mod tests {
 
     #[test]
     /// Test moving file to archive
-    fn test_archive_move() {
+    fn test_archive_file_move() {
         let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
         let source_path = dir.path().join("source_dir").join("source.fit");
         let archive_path = dir.path().join("archive_dir").join("archive.fit");
