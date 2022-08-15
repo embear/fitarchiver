@@ -205,7 +205,7 @@ fn parse_arguments() -> clap::ArgMatches {
                 .long_help("Base directory where the archive is created."),
         )
         .arg(
-            Arg::with_name("file_template")
+            Arg::with_name("file-template")
                 .short('f')
                 .long("file-template")
                 .takes_value(true)
@@ -268,7 +268,7 @@ fn archive_files(options: &clap::ArgMatches) -> Result<String, String> {
             Ok(val) => {
                 let archive_path = base_directory
                     .join(expand_formatstring(
-                        options.value_of("file_template").unwrap(),
+                        options.value_of("file-template").unwrap(),
                         &val,
                     ))
                     .with_extension("fit");
