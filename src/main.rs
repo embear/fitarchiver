@@ -189,8 +189,8 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
 }
 
 /// Returns matched command line arguments
-fn parse_arguments() -> clap::ArgMatches {
-    Command::new("FIT file archiver")
+fn parse_arguments(arguments: Option<Vec<&str>>) -> clap::ArgMatches {
+    let parser = Command::new("FIT file archiver")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
@@ -246,8 +246,12 @@ conversions are supported:
                 .value_name("files")
                 .required(true)
                 .help("List of FIT files to archive."),
-        )
-        .get_matches()
+        );
+
+    match arguments {
+        Some(val) => parser.get_matches_from(val),
+        None => parser.get_matches(),
+    }
 }
 
 /// Create directory for archive file.
@@ -385,7 +389,7 @@ fn process_files(options: &clap::ArgMatches) -> Result<String, String> {
 }
 
 fn main() -> ExitCode {
-    match process_files(&parse_arguments()) {
+    match process_files(&parse_arguments(None)) {
         Ok(val) => println!("{}", val),
         Err(val) => eprintln!("ERROR: {}", val),
     };
