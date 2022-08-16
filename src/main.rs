@@ -19,7 +19,7 @@ struct ActivityData {
     sport_name: String,
     /// Sport sub type, i.e. 'trail'
     sub_sport: String,
-    /// Workout name, i.e. 'Temporun 8km'
+    /// Workout name, i.e. 'temporun_8km'
     workout_name: String,
     /// UTC timestamp of activity start
     timestamp: DateTime<Utc>,
@@ -46,7 +46,7 @@ impl ActivityData {
 /// # Arguments
 ///
 /// * `formatstring` - A format string containing '%' and '$' tags.
-/// * `activity_data` - Data that will be used for expansion of the templates.
+/// * `activity_data` - Data that will be used for expansion of the tags.
 fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> String {
     // the following code is not the most efficient one but makes the mappings obvious
 
@@ -122,7 +122,7 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                         "name" => match &field.value() {
                             fitparser::Value::String(val) => {
                                 activity_data.sport_name =
-                                    val.to_lowercase().replace(' ', "_").to_string();
+                                    val.trim().to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
                                 return Err(format!(
@@ -134,7 +134,7 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                         "sport" => match &field.value() {
                             fitparser::Value::String(val) => {
                                 activity_data.sport =
-                                    val.to_lowercase().replace(' ', "_").to_string();
+                                    val.trim().to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
                                 return Err(format!(
@@ -146,7 +146,7 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                         "sub_sport" => match &field.value() {
                             fitparser::Value::String(val) => {
                                 activity_data.sub_sport =
-                                    val.to_lowercase().replace(' ', "_").to_string();
+                                    val.trim().to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
                                 return Err(format!(
@@ -167,7 +167,7 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                         "wkt_name" => match &field.value() {
                             fitparser::Value::String(val) => {
                                 activity_data.workout_name =
-                                    val.to_lowercase().replace(' ', "_").to_string();
+                                    val.trim().to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
                                 return Err(format!(
