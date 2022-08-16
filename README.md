@@ -42,7 +42,7 @@ OPTIONS:
 
     -f, --file-template <template string>
             Format string defining the path and name of the archive file inside the
-            archive directory.
+            archive directory. '/' must be used as a separator for path components.
             For expanding the timestamp of the workout all tags of strftime() are
             supported. In addition to those the tags the following FIT file specific
             conversions are supported:
