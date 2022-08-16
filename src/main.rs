@@ -265,28 +265,35 @@ fn create_archive_directory(
     options: &clap::ArgMatches,
 ) -> Result<String, String> {
     // check if destination exists and is a directory, create it if needed
-    let parent = archive_path.parent().unwrap();
-    match fs::metadata(parent) {
-        Ok(val) => {
-            if !val.is_dir() {
-                return Err(format!(
-                    "'{}' exists but is not a directory",
-                    parent.display()
-                ));
+    match archive_path.parent() {
+        Some(parent) => match fs::metadata(parent) {
+            Ok(val) => {
+                if !val.is_dir() {
+                    return Err(format!(
+                        "'{}' exists but is not a directory",
+                        parent.display()
+                    ));
+                }
             }
-        }
-        Err(_) => {
-            if !options.is_present("dry-run") {
-                match fs::create_dir_all(&parent) {
-                    Ok(_) => (),
-                    Err(_) => {
-                        return Err(format!(
-                            "Unable to create archive directory '{}'",
-                            parent.display()
-                        ))
+            Err(_) => {
+                if !options.is_present("dry-run") {
+                    match fs::create_dir_all(&parent) {
+                        Ok(_) => (),
+                        Err(_) => {
+                            return Err(format!(
+                                "Unable to create archive directory '{}'",
+                                parent.display()
+                            ))
+                        }
                     }
                 }
             }
+        },
+        None => {
+            return Err(format!(
+                "'{}' is not contained in a directory",
+                archive_path.display(),
+            ))
         }
     }
     Ok(String::from("OK"))
