@@ -389,10 +389,14 @@ fn process_files(options: &clap::ArgMatches) -> Result<String, String> {
         };
     }
 
-    Ok(format!(
-        "Processed {} files with {} errors",
-        file_counter, error_counter
-    ))
+    let msg = format!("Processed {} files", file_counter);
+    let err = if error_counter == 0 {
+        String::new()
+    } else {
+        format!("with {} errors.", error_counter)
+    };
+
+    Ok([msg, err].join(" "))
 }
 
 fn main() -> ExitCode {
