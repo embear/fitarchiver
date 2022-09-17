@@ -1,8 +1,7 @@
 # FIT file archiver
 
-Rename FIT files based on activity data and copy it to a directory based on
-year and month of the activity and other informations contained in the FIT
-file.
+Rename and move/copy FIT files based on activity data to a destination that can
+be given as a template string.
 
 ## Installation
 
