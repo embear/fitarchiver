@@ -63,7 +63,9 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
     let substitutions: Vec<&str> = mappings.iter().map(|x| x[1]).collect();
 
     // replace all '$' tags with their substitutions (activity)
-    let result = AhoCorasick::new(tags).replace_all(formatstring, &substitutions);
+    let result = AhoCorasick::new(tags)
+        .unwrap()
+        .replace_all(formatstring, &substitutions);
 
     // replace all '%' tags with their substitions (timestamp)
     activity_data
