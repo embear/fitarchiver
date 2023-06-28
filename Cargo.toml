@@ -9,7 +9,7 @@ edition = "2021"
 aho-corasick = "1.0.2"
 chrono = "0.4.23"
 clap = "3.2.16"
-fitparser = "0.5.0"
+fitparser = "0.6.0"
 
 [dev-dependencies]
 tempdir = "0.3.7"
