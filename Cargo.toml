@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 aho-corasick = "0.7.18"
-chrono = "0.4.19"
+chrono = "0.4.23"
 clap = "3.2.16"
 fitparser = "0.5.0"
 

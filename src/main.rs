@@ -33,7 +33,7 @@ impl ActivityData {
             sport_name: String::from("unknown"),
             sub_sport: String::from("unknown"),
             workout_name: String::from("unknown"),
-            timestamp: chrono::Utc.ymd(1970, 1, 1).and_hms(0, 0, 0),
+            timestamp: chrono::Utc.with_ymd_and_hms(1970, 1, 1, 0, 0, 0).unwrap(),
         }
     }
 }
@@ -422,7 +422,7 @@ mod tests {
             sport_name: String::from("training"),
             sub_sport: String::from("trail"),
             workout_name: String::from("interval"),
-            timestamp: Utc.ymd(2014, 7, 8).and_hms(9, 10, 11),
+            timestamp: chrono::Utc.with_ymd_and_hms(2014, 7, 8, 9, 10, 11).unwrap(),
         };
 
         // default format string
