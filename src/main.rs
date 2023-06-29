@@ -6,7 +6,7 @@
 
 use aho_corasick::AhoCorasick;
 use chrono::{DateTime, TimeZone, Utc};
-use clap::{Arg, Command};
+use clap::{Arg, ArgAction, Command};
 use std::fs::{self, File};
 use std::path::Path;
 use std::process::ExitCode;
@@ -197,20 +197,20 @@ fn parse_arguments(arguments: Option<Vec<&str>>) -> clap::ArgMatches {
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
         .arg(
-            Arg::with_name("directory")
+            Arg::new("directory")
                 .short('d')
                 .long("directory")
-                .takes_value(true)
+                .num_args(1)
                 .value_name("archive directory")
                 .default_value(".")
                 .help("Archive base directory.")
                 .long_help("Base directory where the archive is created."),
         )
         .arg(
-            Arg::with_name("file-template")
+            Arg::new("file-template")
                 .short('f')
                 .long("file-template")
-                .takes_value(true)
+                .num_args(1)
                 .value_name("template string")
                 .default_value("%Y/%m/%Y-%m-%d-%H%M%S-$s")
                 .help("Format string defining the path and name of the archive file in the archive directory.")
@@ -229,22 +229,22 @@ conversions are supported:
   $w    workout name    'temporun_8km'   'unknown'")
         )
         .arg(
-            Arg::with_name("move")
+            Arg::new("move")
                 .short('m')
                 .long("move")
-                .takes_value(false)
+                .action(ArgAction::SetTrue)
                 .help("Move files to archive instead of copying them."),
         )
         .arg(
-            Arg::with_name("dry-run")
+            Arg::new("dry-run")
                 .short('n')
                 .long("dry-run")
-                .takes_value(false)
+                .action(ArgAction::SetTrue)
                 .help("Do not copy or move the files, just show what will happen."),
         )
         .arg(
-            Arg::with_name("files")
-                .multiple(true)
+            Arg::new("files")
+                .num_args(1..)
                 .value_name("files")
                 .required(true)
                 .help("List of FIT files to archive."),
@@ -278,7 +278,7 @@ fn create_archive_directory(
                 }
             }
             Err(_) => {
-                if !options.is_present("dry-run") {
+                if !options.get_flag("dry-run") {
                     match fs::create_dir_all(&parent) {
                         Ok(_) => (),
                         Err(_) => {
@@ -318,10 +318,10 @@ fn archive_file(
         source_path.display(),
         archive_path.display()
     );
-    if !options.is_present("dry-run") {
+    if !options.get_flag("dry-run") {
         match fs::copy(source_path, &archive_path) {
             Ok(_) => {
-                if options.is_present("move") {
+                if options.get_flag("move") {
                     match fs::remove_file(source_path) {
                         Ok(_) => {
                             msg.push_str("moved");
@@ -359,8 +359,12 @@ fn process_files(options: &clap::ArgMatches) -> Result<String, String> {
     let mut file_counter: u16 = 0;
     let mut error_counter: u16 = 0;
 
-    let base_directory = Path::new(options.value_of("directory").unwrap());
-    let files: Vec<&str> = options.values_of("files").unwrap().collect();
+    let base_directory = Path::new(options.get_one::<String>("directory").unwrap().as_str());
+    let files: Vec<&str> = options
+        .get_many::<String>("files")
+        .unwrap()
+        .map(|s| s.as_str())
+        .collect();
 
     for file in files {
         let source_path = Path::new(file);
@@ -368,7 +372,7 @@ fn process_files(options: &clap::ArgMatches) -> Result<String, String> {
             Ok(val) => {
                 let archive_path = base_directory
                     .join(expand_formatstring(
-                        options.value_of("file-template").unwrap(),
+                        options.get_one::<String>("file-template").unwrap().as_str(),
                         &val,
                     ))
                     .with_extension("fit");
