@@ -107,7 +107,9 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                             }
                             &_ => {
                                 return Err(format!(
-                                    "Unexpected value in enum fitparser::Value in '{}'",
+                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'",
+                                    field.value(),
+                                    field.name(),
                                     path.display()
                                 ))
                             }
@@ -128,7 +130,9 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                             }
                             &_ => {
                                 return Err(format!(
-                                    "Unexpected value in enum fitparser::Value in '{}'",
+                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'",
+                                    field.value(),
+                                    field.name(),
                                     path.display()
                                 ))
                             }
@@ -140,7 +144,9 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                             }
                             &_ => {
                                 return Err(format!(
-                                    "Unexpected value in enum fitparser::Value in '{}'",
+                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'",
+                                    field.value(),
+                                    field.name(),
                                     path.display()
                                 ))
                             }
@@ -152,7 +158,9 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                             }
                             &_ => {
                                 return Err(format!(
-                                    "Unexpected value in enum fitparser::Value in '{}'",
+                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'",
+                                    field.value(),
+                                    field.name(),
                                     path.display()
                                 ))
                             }
@@ -173,7 +181,9 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                             }
                             &_ => {
                                 return Err(format!(
-                                    "Unexpected value in enum fitparser::Value in '{}'",
+                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'",
+                                    field.value(),
+                                    field.name(),
                                     path.display()
                                 ))
                             }
