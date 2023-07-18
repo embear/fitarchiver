@@ -129,12 +129,12 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                                     val.trim().to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
-                                return Err(format!(
-                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'",
+                                eprintln!(
+                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'. Using 'unknown' instead!",
                                     field.value(),
                                     field.name(),
                                     path.display()
-                                ))
+                                );
                             }
                         },
                         "sport" => match &field.value() {
@@ -143,12 +143,12 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                                     val.trim().to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
-                                return Err(format!(
-                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'",
+                                eprintln!(
+                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'. Using 'unknown' instead!",
                                     field.value(),
                                     field.name(),
                                     path.display()
-                                ))
+                                );
                             }
                         },
                         "sub_sport" => match &field.value() {
@@ -157,12 +157,12 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                                     val.trim().to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
-                                return Err(format!(
-                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'",
+                                eprintln!(
+                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'. Using 'unknown' instead!",
                                     field.value(),
                                     field.name(),
                                     path.display()
-                                ))
+                                );
                             }
                         },
                         &_ => (), // ignore all other values
@@ -180,12 +180,12 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                                     val.trim().to_lowercase().replace(' ', "_").to_string();
                             }
                             &_ => {
-                                return Err(format!(
-                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'",
+                                eprintln!(
+                                    "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'. Using 'unknown' instead!",
                                     field.value(),
                                     field.name(),
                                     path.display()
-                                ))
+                                );
                             }
                         },
                         &_ => (), // ignore all other values
