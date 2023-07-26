@@ -606,4 +606,36 @@ mod tests {
         assert!(!source_path.exists());
         assert!(archive_path.exists());
     }
+
+    #[test]
+    /// Test extracting activity data from real FIT file
+    fn test_activity_data_from_file() {
+        // get the directory of the test executable
+        let mut source_path = std::env::current_exe()
+            .unwrap()
+            .parent()
+            .expect("executable's directory")
+            .to_path_buf();
+
+        // go up to the repository base directory
+        source_path.pop();
+        source_path.pop();
+        source_path.pop();
+
+        // append location of the test data
+        source_path.push("test");
+        source_path.push("test_data_01.fit");
+
+        let result = parse_fit_file(&source_path);
+        assert!(result.is_ok());
+        let activity_data = result.unwrap();
+        assert_eq!(String::from("running"), activity_data.sport);
+        assert_eq!(String::from("trail_run"), activity_data.sport_name);
+        assert_eq!(String::from("trail"), activity_data.sub_sport);
+        assert_eq!(String::from("test_workout"), activity_data.workout_name);
+        assert_eq!(
+            chrono::Utc.with_ymd_and_hms(2023, 7, 26, 6, 22, 4).unwrap(),
+            activity_data.timestamp
+        );
+    }
 }
