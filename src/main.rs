@@ -222,21 +222,19 @@ fn parse_arguments(arguments: Option<Vec<&str>>) -> clap::ArgMatches {
                 .long("file-template")
                 .num_args(1)
                 .value_name("template string")
-                .default_value("%Y/%m/%Y-%m-%d-%H%M%S-$s")
+                .default_value("'%Y/%m/%Y-%m-%d-%H%M%S-$s'")
                 .help("Format string defining the path and name of the archive file in the archive directory.")
                 .long_help(
-"Format string defining the path and name of the archive file inside the
-archive directory. '/' must be used as a separator for path components.
-For expanding the timestamp of the workout all tags of strftime() are
-supported. In addition to those the tags the following FIT file specific
-conversions are supported:
+"Format template that defines the path and name of the archive file in the archive directory. '/' must be used as a separator for path components. All strftime() tags are supported for expanding the time information of the training. In addition to the time information the following FIT file specific expansions are supported:
 
   Tag   Description     Example          Default
   ------------------------------------------------
   $s    sport type      'running'        'unknown'
   $S    sport subtype   'trail'          'unknown'
   $n    sport name      'trail_run'      'unknown'
-  $w    workout name    'temporun_8km'   'unknown'")
+  $w    workout name    'temporun_8km'   'unknown'
+
+NOTE: It is possible that the shell used tries to replace tags. Therefore, the template should be passed as a quoted string.")
         )
         .arg(
             Arg::new("move")
