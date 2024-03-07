@@ -81,6 +81,7 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
 /// * `path` - Path of the FIT file
 fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
     let mut activity_data = ActivityData::new();
+    let mut sports: Vec<String> = Vec::new();
 
     // open FIT file
     let mut fp = match File::open(path) {
@@ -139,8 +140,8 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                         },
                         "sport" => match &field.value() {
                             fitparser::Value::String(val) => {
-                                activity_data.sport =
-                                    val.trim().to_lowercase().replace(' ', "_").to_string();
+                                sports
+                                    .push(val.trim().to_lowercase().replace(' ', "_").to_string());
                             }
                             &_ => {
                                 eprintln!(
@@ -195,6 +196,13 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
 
             _ => (), // ignore all other values
         }
+    }
+
+    // build sport value for single- and multisport activities
+    if sports.len() == 1 {
+        activity_data.sport = sports.get(0).unwrap().to_string();
+    } else if sports.len() > 1 {
+        activity_data.sport = String::from("multisport_") + &sports.join("_");
     }
 
     Ok(activity_data)
