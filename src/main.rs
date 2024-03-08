@@ -230,7 +230,7 @@ fn parse_arguments(arguments: Option<Vec<&str>>) -> clap::ArgMatches {
                 .long("file-template")
                 .num_args(1)
                 .value_name("template string")
-                .default_value("'%Y/%m/%Y-%m-%d-%H%M%S-$s'")
+                .default_value("%Y/%m/%Y-%m-%d-%H%M%S-$s")
                 .help("Format string defining the path and name of the archive file in the archive directory.")
                 .long_help(
 "Format template that defines the path and name of the archive file in the archive directory. '/' must be used as a separator for path components. All strftime() tags are supported for expanding the time information of the training. In addition to the time information the following FIT file specific expansions are supported:
