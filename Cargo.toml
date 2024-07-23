@@ -9,7 +9,7 @@ edition = "2021"
 aho-corasick = "1.0.2"
 chrono = "0.4.26"
 clap = { version = "4.3.21", features = ["wrap_help", "derive"] }
-fitparser = "0.6.0"
+fitparser = "0.7.0"
 
 [dev-dependencies]
 tempdir = "0.3.7"
