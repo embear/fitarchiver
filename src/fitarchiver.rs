@@ -5,8 +5,37 @@
 use aho_corasick::AhoCorasick;
 use chrono::{DateTime, TimeZone, Utc};
 use clap::{Arg, ArgAction, Command};
+use std::error::Error;
+use std::fmt;
 use std::fs::{self, File};
 use std::path::Path;
+
+#[derive(Debug)]
+pub struct ArchiverError {
+    details: String,
+}
+
+impl ArchiverError {
+    fn new(msg: &str) -> ArchiverError {
+        ArchiverError {
+            details: msg.to_string(),
+        }
+    }
+}
+
+impl fmt::Display for ArchiverError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl Error for ArchiverError {
+    fn description(&self) -> &str {
+        &self.details
+    }
+}
+
+type Result<T> = std::result::Result<T, ArchiverError>;
 
 /// Information extracted from a FIT file
 struct ActivityData {
@@ -76,20 +105,26 @@ fn expand_formatstring(formatstring: &str, activity_data: &ActivityData) -> Stri
 /// # Arguments
 ///
 /// * `path` - Path of the FIT file
-fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
+fn parse_fit_file(path: &Path) -> Result<ActivityData> {
     let mut activity_data = ActivityData::new();
     let mut sports: Vec<String> = Vec::new();
 
     // open FIT file
     let mut fp = match File::open(path) {
         Ok(fp) => fp,
-        Err(_err) => return Err(format!("Unable to open '{}'", path.display())),
+        Err(_err) => {
+            let msg = format!("Unable to open '{}'", path.display());
+            return Err(ArchiverError::new(&msg));
+        }
     };
 
     // parse FIT file to data structure
     let parsed_data = match fitparser::from_reader(&mut fp) {
         Ok(parsed_data) => parsed_data,
-        Err(_err) => return Err(format!("Unable to parse '{}'", path.display())),
+        Err(_err) => {
+            let msg = format!("Unable to parse '{}'", path.display());
+            return Err(ArchiverError::new(&msg));
+        }
     };
 
     // iterate over all data elements
@@ -104,12 +139,13 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData, String> {
                                 activity_data.timestamp = DateTime::from(*val)
                             }
                             &_ => {
-                                return Err(format!(
+                                let msg = format!(
                                     "Unexpected value '{}' in enum fitparser::Value '{}' in '{}'",
                                     field.value(),
                                     field.name(),
                                     path.display()
-                                ))
+                                );
+                                return Err(ArchiverError::new(&msg));
                             }
                         },
                         &_ => (), // ignore all other values
@@ -275,19 +311,14 @@ NOTE: It is possible that the shell used tries to replace tags. Therefore, the t
 ///
 /// `archive_path` - Path to the archive file.
 /// `options` - Command line options.
-fn create_archive_directory(
-    archive_path: &Path,
-    options: &clap::ArgMatches,
-) -> Result<String, String> {
+fn create_archive_directory(archive_path: &Path, options: &clap::ArgMatches) -> Result<String> {
     // check if destination exists and is a directory, create it if needed
     match archive_path.parent() {
         Some(parent) => match fs::metadata(parent) {
             Ok(val) => {
                 if !val.is_dir() {
-                    return Err(format!(
-                        "'{}' exists but is not a directory",
-                        parent.display()
-                    ));
+                    let msg = format!("'{}' exists but is not a directory", parent.display());
+                    return Err(ArchiverError::new(&msg));
                 }
             }
             Err(_) => {
@@ -295,20 +326,22 @@ fn create_archive_directory(
                     match fs::create_dir_all(&parent) {
                         Ok(_) => (),
                         Err(_) => {
-                            return Err(format!(
+                            let msg = format!(
                                 "Unable to create archive directory '{}'",
                                 parent.display()
-                            ))
+                            );
+                            return Err(ArchiverError::new(&msg));
                         }
                     }
                 }
             }
         },
         None => {
-            return Err(format!(
+            let msg = format!(
                 "'{}' is not contained in a directory",
-                archive_path.display(),
-            ))
+                archive_path.display()
+            );
+            return Err(ArchiverError::new(&msg));
         }
     }
     Ok(String::from("OK"))
@@ -325,7 +358,7 @@ fn archive_file(
     source_path: &Path,
     archive_path: &Path,
     options: &clap::ArgMatches,
-) -> Result<String, String> {
+) -> Result<String> {
     let mut msg = format!(
         "'{}' -> '{}' ... ",
         source_path.display(),
@@ -340,10 +373,8 @@ fn archive_file(
                             msg.push_str("moved");
                         }
                         Err(_) => {
-                            return Err(format!(
-                                "Unable to remove file '{}'",
-                                source_path.display()
-                            ));
+                            let msg = format!("Unable to remove file '{}'", source_path.display());
+                            return Err(ArchiverError::new(&msg));
                         }
                     }
                 } else {
@@ -351,10 +382,8 @@ fn archive_file(
                 }
             }
             Err(_) => {
-                return Err(format!(
-                    "Unable to create file '{}'",
-                    archive_path.display()
-                ));
+                let msg = format!("Unable to create file '{}'", archive_path.display());
+                return Err(ArchiverError::new(&msg));
             }
         };
     } else {
@@ -368,7 +397,7 @@ fn archive_file(
 /// # Arguments
 ///
 /// `options` - Command line options.
-pub fn process_files(options: &clap::ArgMatches) -> Result<String, String> {
+pub fn process_files(options: &clap::ArgMatches) -> Result<String> {
     let mut file_counter: u16 = 0;
     let mut error_counter: u16 = 0;
 
