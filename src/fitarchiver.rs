@@ -449,14 +449,16 @@ pub fn process_files(options: &clap::ArgMatches) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use chrono::TimeZone;
+    use std::fs::{self, File};
+    use std::path::PathBuf;
     use tempdir::TempDir;
 
     #[test]
     /// Test format string expansion
     fn test_expand_formatstring() {
         // setup activity data
-        let activity_data = ActivityData {
+        let activity_data = super::ActivityData {
             sport: String::from("running"),
             sport_name: String::from("training"),
             sub_sport: String::from("trail"),
@@ -467,167 +469,187 @@ mod tests {
         // default format string
         assert_eq!(
             String::from("2014/07/2014-07-08-091011-running"),
-            expand_formatstring("%Y/%m/%Y-%m-%d-%H%M%S-$s", &activity_data)
+            super::expand_formatstring("%Y/%m/%Y-%m-%d-%H%M%S-$s", &activity_data)
         );
 
         // single tags
         assert_eq!(
             String::from("running"),
-            expand_formatstring("$s", &activity_data)
+            super::expand_formatstring("$s", &activity_data)
         );
         assert_eq!(
             String::from("training"),
-            expand_formatstring("$n", &activity_data)
+            super::expand_formatstring("$n", &activity_data)
         );
         assert_eq!(
             String::from("trail"),
-            expand_formatstring("$S", &activity_data)
+            super::expand_formatstring("$S", &activity_data)
         );
         assert_eq!(
             String::from("interval"),
-            expand_formatstring("$w", &activity_data)
+            super::expand_formatstring("$w", &activity_data)
         );
 
         // repeated tags
         assert_eq!(
             String::from("running-running-running-running"),
-            expand_formatstring("$s-$s-$s-$s", &activity_data)
+            super::expand_formatstring("$s-$s-$s-$s", &activity_data)
         );
     }
 
     #[test]
     fn test_create_archive_directory() {
-        let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
-        let source_path = dir.path().join("source_dir").join("source.fit");
-        let archive_path = dir.path().join("archive_dir").join("archive.fit");
+        let tmpdir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = tmpdir.path().join("source_dir").join("source.fit");
+        let archive_file = tmpdir.path().join("archive_dir").join("archive.fit");
 
-        let options = parse_arguments(Some(vec![
+        let options = super::parse_arguments(Some(vec![
             "fitarchiver",
             "-d",
-            archive_path.parent().unwrap().as_os_str().to_str().unwrap(),
+            archive_file.parent().unwrap().as_os_str().to_str().unwrap(),
             source_path.as_os_str().to_str().unwrap(),
         ]));
 
-        assert!(!archive_path.parent().unwrap().exists());
-        create_archive_directory(&archive_path, &options).expect("error during creating directory");
-        assert!(archive_path.parent().unwrap().exists());
+        assert!(!archive_file.parent().unwrap().exists());
+        super::create_archive_directory(&archive_file, &options)
+            .expect("error during creating directory");
+        assert!(archive_file.parent().unwrap().exists());
+
+        // cleanup
+        fs::remove_dir_all(&tmpdir).expect("error during removing temporary directory");
     }
 
     #[test]
     fn test_create_archive_directory_dry_run() {
-        let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
-        let source_path = dir.path().join("source_dir").join("source.fit");
-        let archive_path = dir.path().join("archive_dir").join("archive.fit");
+        let tmpdir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = tmpdir.path().join("source_dir").join("source.fit");
+        let archive_file = tmpdir.path().join("archive_dir").join("archive.fit");
 
-        let options = parse_arguments(Some(vec![
+        let options = super::parse_arguments(Some(vec![
             "fitarchiver",
             "-n",
             "-d",
-            archive_path.parent().unwrap().as_os_str().to_str().unwrap(),
+            archive_file.parent().unwrap().as_os_str().to_str().unwrap(),
             source_path.as_os_str().to_str().unwrap(),
         ]));
 
-        assert!(!archive_path.parent().unwrap().exists());
-        create_archive_directory(&archive_path, &options).expect("error during creating directory");
-        assert!(!archive_path.parent().unwrap().exists());
+        assert!(!archive_file.parent().unwrap().exists());
+        super::create_archive_directory(&archive_file, &options)
+            .expect("error during creating directory");
+        assert!(!archive_file.parent().unwrap().exists());
+
+        // cleanup
+        fs::remove_dir_all(&tmpdir).expect("error during removing temporary directory");
     }
 
     #[test]
     /// Test dry run
     fn test_archive_file_dry_run() {
-        let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
-        let source_path = dir.path().join("source_dir").join("source.fit");
-        let archive_path = dir.path().join("archive_dir").join("archive.fit");
+        let tmpdir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = tmpdir.path().join("source_dir").join("source.fit");
+        let archive_file = tmpdir.path().join("archive_dir").join("archive.fit");
 
         {
             // put file creation into a separate scope so the file is closed for the actual test
             fs::create_dir_all(&source_path.parent().unwrap())
                 .expect("error during creating temporary archive directory");
-            fs::create_dir_all(&archive_path.parent().unwrap())
+            fs::create_dir_all(&archive_file.parent().unwrap())
                 .expect("error during creating temporary archive directory");
             File::create(&source_path).expect("unable to create test file");
         }
 
-        let options = parse_arguments(Some(vec![
+        let options = super::parse_arguments(Some(vec![
             "fitarchiver",
             "-n",
             "-d",
-            archive_path.parent().unwrap().as_os_str().to_str().unwrap(),
+            archive_file.parent().unwrap().as_os_str().to_str().unwrap(),
             "-f",
             "archive",
             source_path.as_os_str().to_str().unwrap(),
         ]));
 
         assert!(source_path.exists());
-        assert!(!archive_path.exists());
-        archive_file(&source_path, &archive_path, &options).expect("error during archiving file");
+        assert!(!archive_file.exists());
+        super::archive_file(&source_path, &archive_file, &options)
+            .expect("error during archiving file");
         assert!(source_path.exists());
-        assert!(!archive_path.exists());
+        assert!(!archive_file.exists());
+
+        // cleanup
+        fs::remove_dir_all(&tmpdir).expect("error during removing temporary directory");
     }
 
     #[test]
     /// Test copying file to archive
     fn test_archive_file_copy() {
-        let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
-        let source_path = dir.path().join("source_dir").join("source.fit");
-        let archive_path = dir.path().join("archive_dir").join("archive.fit");
+        let tmpdir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = tmpdir.path().join("source_dir").join("source.fit");
+        let archive_file = tmpdir.path().join("archive_dir").join("archive.fit");
 
         {
             // put file creation into a separate scope so the file is closed for the actual test
             fs::create_dir_all(&source_path.parent().unwrap())
                 .expect("error during creating temporary archive directory");
-            fs::create_dir_all(&archive_path.parent().unwrap())
+            fs::create_dir_all(&archive_file.parent().unwrap())
                 .expect("error during creating temporary archive directory");
             File::create(&source_path).expect("unable to create test file");
         }
 
-        let options = parse_arguments(Some(vec![
+        let options = super::parse_arguments(Some(vec![
             "fitarchiver",
             "-d",
-            archive_path.parent().unwrap().as_os_str().to_str().unwrap(),
+            archive_file.parent().unwrap().as_os_str().to_str().unwrap(),
             "-f",
             "archive",
             source_path.as_os_str().to_str().unwrap(),
         ]));
 
         assert!(source_path.exists());
-        assert!(!archive_path.exists());
-        archive_file(&source_path, &archive_path, &options).expect("error during archiving file");
+        assert!(!archive_file.exists());
+        super::archive_file(&source_path, &archive_file, &options)
+            .expect("error during archiving file");
         assert!(source_path.exists());
-        assert!(archive_path.exists());
+        assert!(archive_file.exists());
+
+        // cleanup
+        fs::remove_dir_all(&tmpdir).expect("error during removing temporary directory");
     }
 
     #[test]
     /// Test moving file to archive
     fn test_archive_file_move() {
-        let dir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
-        let source_path = dir.path().join("source_dir").join("source.fit");
-        let archive_path = dir.path().join("archive_dir").join("archive.fit");
+        let tmpdir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = tmpdir.path().join("source_dir").join("source.fit");
+        let archive_file = tmpdir.path().join("archive_dir").join("archive.fit");
 
         {
             // put file creation into a separate scope so the file is closed for the actual test
             fs::create_dir_all(&source_path.parent().unwrap())
                 .expect("error during creating temporary archive directory");
-            fs::create_dir_all(&archive_path.parent().unwrap())
+            fs::create_dir_all(&archive_file.parent().unwrap())
                 .expect("error during creating temporary archive directory");
             File::create(&source_path).expect("unable to create test file");
         }
 
-        let options = parse_arguments(Some(vec![
+        let options = super::parse_arguments(Some(vec![
             "fitarchiver",
             "-m",
             "-d",
-            archive_path.parent().unwrap().as_os_str().to_str().unwrap(),
+            archive_file.parent().unwrap().as_os_str().to_str().unwrap(),
             "-f",
             "archive",
             source_path.as_os_str().to_str().unwrap(),
         ]));
 
         assert!(source_path.exists());
-        assert!(!archive_path.exists());
-        archive_file(&source_path, &archive_path, &options).expect("error during archiving file");
+        assert!(!archive_file.exists());
+        super::archive_file(&source_path, &archive_file, &options)
+            .expect("error during archiving file");
         assert!(!source_path.exists());
-        assert!(archive_path.exists());
+        assert!(archive_file.exists());
+
+        // cleanup
+        fs::remove_dir_all(&tmpdir).expect("error during removing temporary directory");
     }
 
     #[test]
@@ -649,7 +671,7 @@ mod tests {
         source_path.push("test");
         source_path.push("test_data_01.fit");
 
-        let result = parse_fit_file(&source_path);
+        let result = super::parse_fit_file(&source_path);
         assert!(result.is_ok());
         let activity_data = result.unwrap();
         assert_eq!(String::from("running"), activity_data.sport);
