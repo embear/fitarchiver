@@ -38,6 +38,7 @@ impl Error for ArchiverError {
 type Result<T> = std::result::Result<T, ArchiverError>;
 
 /// Information extracted from a FIT file
+#[derive(Debug)]
 struct ActivityData {
     /// Sport type, i.e. 'running'
     sport: String,
@@ -498,6 +499,7 @@ mod tests {
     }
 
     #[test]
+    // Test creating the archive directory
     fn test_create_archive_directory() {
         let tmpdir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
         let source_path = tmpdir.path().join("source_dir").join("source.fit");
@@ -520,6 +522,7 @@ mod tests {
     }
 
     #[test]
+    // Test not creating the archive directory in dry run
     fn test_create_archive_directory_dry_run() {
         let tmpdir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
         let source_path = tmpdir.path().join("source_dir").join("source.fit");
@@ -537,6 +540,68 @@ mod tests {
         super::create_archive_directory(&archive_file, &options)
             .expect("error during creating directory");
         assert!(!archive_file.parent().unwrap().exists());
+
+        // cleanup
+        fs::remove_dir_all(&tmpdir).expect("error during removing temporary directory");
+    }
+
+    #[test]
+    // Test failure when parent of archive directory is missing
+    fn test_create_archive_directory_failure_parent_missing() {
+        let tmpdir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = tmpdir.path().join("source_dir").join("source.fit");
+        let archive_path = PathBuf::new();
+
+        let options = super::parse_arguments(Some(vec![
+            "fitarchiver",
+            "-d",
+            archive_path.as_os_str().to_str().unwrap(),
+            source_path.as_os_str().to_str().unwrap(),
+        ]));
+
+        super::create_archive_directory(&archive_path, &options).expect_err("error expected");
+
+        // cleanup
+        fs::remove_dir_all(&tmpdir).expect("error during removing temporary directory");
+    }
+
+    #[test]
+    // Test failure when archive directory is a file
+    fn test_create_archive_directory_failure_file_exists() {
+        let tmpdir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = tmpdir.path().join("source_dir").join("source.fit");
+        let archive_file = tmpdir.path().join("archive_dir").join("archive.fit");
+
+        let options = super::parse_arguments(Some(vec![
+            "fitarchiver",
+            "-d",
+            archive_file.parent().unwrap().as_os_str().to_str().unwrap(),
+            source_path.as_os_str().to_str().unwrap(),
+        ]));
+
+        std::fs::File::create(&archive_file.parent().unwrap())
+            .expect("error during creating directory");
+        super::create_archive_directory(&archive_file, &options).expect_err("error expected");
+
+        // cleanup
+        fs::remove_dir_all(&tmpdir).expect("error during removing temporary directory");
+    }
+
+    #[test]
+    // Test failure when archive directory is not a directory
+    fn test_create_archive_directory_failure_unable_to_create() {
+        let tmpdir = TempDir::new("fitarchive").expect("Error during creating temporary directory");
+        let source_path = tmpdir.path().join("source_dir").join("source.fit");
+        let archive_file = PathBuf::from("/").join("archive_dir").join("archive.fit");
+
+        let options = super::parse_arguments(Some(vec![
+            "fitarchiver",
+            "-d",
+            archive_file.parent().unwrap().as_os_str().to_str().unwrap(),
+            source_path.as_os_str().to_str().unwrap(),
+        ]));
+
+        super::create_archive_directory(&archive_file, &options).expect_err("error expected");
 
         // cleanup
         fs::remove_dir_all(&tmpdir).expect("error during removing temporary directory");
@@ -659,7 +724,7 @@ mod tests {
         let mut source_path = std::env::current_exe()
             .unwrap()
             .parent()
-            .expect("executable's directory")
+            .expect("executable directory")
             .to_path_buf();
 
         // go up to the repository base directory
@@ -682,5 +747,49 @@ mod tests {
             chrono::Utc.with_ymd_and_hms(2023, 7, 26, 6, 22, 4).unwrap(),
             activity_data.timestamp
         );
+    }
+
+    #[test]
+    /// Test activity file is missing
+    fn test_activity_data_from_file_failure_file_missing() {
+        // get the directory of the test executable
+        let mut source_path = std::env::current_exe()
+            .unwrap()
+            .parent()
+            .expect("executable directory")
+            .to_path_buf();
+
+        // go up to the repository base directory
+        source_path.pop();
+        source_path.pop();
+        source_path.pop();
+
+        // append location of the test data
+        source_path.push("test");
+        source_path.push("missing.fit");
+
+        super::parse_fit_file(&source_path).expect_err("error expected");
+    }
+
+    #[test]
+    /// Test activity file is corrupted
+    fn test_activity_data_from_file_failure_file_empty() {
+        // get the directory of the test executable
+        let mut source_path = std::env::current_exe()
+            .unwrap()
+            .parent()
+            .expect("executable directory")
+            .to_path_buf();
+
+        // go up to the repository base directory
+        source_path.pop();
+        source_path.pop();
+        source_path.pop();
+
+        // append location of the test data
+        source_path.push("test");
+        source_path.push("corrupted.fit");
+
+        super::parse_fit_file(&source_path).expect_err("error expected");
     }
 }
