@@ -33,23 +33,26 @@ Arguments:
 Options:
   -d, --directory <archive directory>
           Base directory where the archive is created.
-          
+
           [default: .]
 
   -f, --file-template <template string>
-          Format string defining the path and name of the archive file inside the
-          archive directory. '/' must be used as a separator for path components.
-          For expanding the timestamp of the workout all tags of strftime() are
-          supported. In addition to those the tags the following FIT file specific
-          conversions are supported:
-          
+          Format template that defines the path and name of the archive file in
+          the archive directory. '/' must be used as a separator for path
+          components. All strftime() tags are supported for expanding the time
+          information of the training. In addition to the time information the
+          following FIT file specific expansions are supported:
+
             Tag   Description     Example          Default
             ------------------------------------------------
             $s    sport type      'running'        'unknown'
             $S    sport subtype   'trail'          'unknown'
             $n    sport name      'trail_run'      'unknown'
             $w    workout name    'temporun_8km'   'unknown'
-          
+
+          NOTE: It is possible that the shell used tries to replace tags.
+          Therefore, the template should be passed as a quoted string.
+
           [default: %Y/%m/%Y-%m-%d-%H%M%S-$s]
 
   -m, --move
@@ -68,5 +71,5 @@ Options:
 Example:
 
 ```sh
-fitarchiver -d ~/backup/activities ~/Downloads/*.fit
+fitarchiver -d ~/backup/activities -f '%Y/%m/%d/%H%M%S-$s' ~/Downloads/*.fit
 ```
