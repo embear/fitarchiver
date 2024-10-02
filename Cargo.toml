@@ -2,6 +2,7 @@
 name = "fitarchiver"
 authors = [ "Markus Braun <markus.braun@krawel.de>" ]
 description = "Rename FIT files based on activity data and copy it to a directory based on year and month of the activity."
+version = "0.1.3"
 edition = "2021"
 build = "build.rs"
 
