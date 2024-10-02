@@ -244,8 +244,13 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData> {
 
 /// Returns matched command line arguments
 pub fn parse_arguments(arguments: Option<Vec<&str>>) -> clap::ArgMatches {
+    const VERSION: &'static str = concat!(
+        env!("VERGEN_SEMVER"),
+        " compiled at ",
+        env!("VERGEN_BUILD_TIMESTAMP")
+    );
     let parser = Command::new("FIT file archiver")
-        .version(env!("CARGO_PKG_VERSION"))
+        .version(VERSION)
         .author(env!("CARGO_PKG_AUTHORS"))
         .about(env!("CARGO_PKG_DESCRIPTION"))
         .arg(
