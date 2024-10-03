@@ -245,7 +245,7 @@ fn parse_fit_file(path: &Path) -> Result<ActivityData> {
 /// Returns matched command line arguments
 pub fn parse_arguments(arguments: Option<Vec<&str>>) -> clap::ArgMatches {
     const VERSION: &'static str = concat!(
-        env!("VERGEN_SEMVER"),
+        env!("VERGEN_GIT_DESCRIBE"),
         " compiled at ",
         env!("VERGEN_BUILD_TIMESTAMP")
     );

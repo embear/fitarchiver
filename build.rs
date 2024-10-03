@@ -1,12 +1,11 @@
-extern crate vergen;
+extern crate vergen_git2;
 
-use vergen::{generate_cargo_keys, ConstantsFlags};
+use anyhow::Result;
+use vergen_git2::{BuildBuilder, Emitter, Git2Builder};
 
-fn main() {
-    // Setup the flags, toggling off the 'SEMVER_FROM_CARGO_PKG' flag
-    let mut flags = ConstantsFlags::all();
-    flags.toggle(ConstantsFlags::SEMVER_FROM_CARGO_PKG);
-
-    // Generate the 'cargo:' key output
-    generate_cargo_keys(flags).expect("Unable to generate the cargo keys!");
+pub fn main() -> Result<()> {
+    Emitter::default()
+        .add_instructions(&BuildBuilder::all_build()?)?
+        .add_instructions(&Git2Builder::all_git()?)?
+        .emit()
 }
