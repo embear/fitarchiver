@@ -284,9 +284,9 @@ dependencies = [
 
 [[package]]
 name = "fitparser"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c57b6c1de15f92aa2846a6286eefc115637405a4298eea11a65799aa4ce4177"
+checksum = "cae254760a2aaeadc922a67136341af2c2f5f59e46cd1370960d5899d48ab17f"
 dependencies = [
  "chrono",
  "nom",

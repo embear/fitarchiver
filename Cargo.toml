@@ -10,7 +10,7 @@ build = "build.rs"
 aho-corasick = "1.0.2"
 chrono = "0.4.26"
 clap = { version = "4.3.21", features = ["wrap_help", "derive"] }
-fitparser = "0.7.0"
+fitparser = "0.8.0"
 
 [build-dependencies]
 vergen-git2 = { version = "1.0.0", features = ["build"] }
