@@ -2,20 +2,33 @@
 # See https://pre-commit.com/hooks.html for more hooks
 exclude: '^test/.*$'
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
     hooks:
-    -   id: trailing-whitespace
-    -   id: mixed-line-ending
-    -   id: end-of-file-fixer
-    -   id: check-toml
-    -   id: check-added-large-files
-    -   id: check-merge-conflict
--   repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.4
+      # filetype specific checks
+      - id: check-ast
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
+      # common checks
+      - id: check-added-large-files
+      - id: check-shebang-scripts-are-executable
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      # modifying hooks
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+      - id: end-of-file-fixer
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.27.0
     hooks:
     -   id: gitleaks
--   repo: https://github.com/compilerla/conventional-pre-commit
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+    - id: gitlint
+  - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v3.4.0
     hooks:
       - id: conventional-pre-commit
