@@ -23,11 +23,11 @@ repos:
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.27.0
     hooks:
-    -   id: gitleaks
+      - id: gitleaks
   - repo: https://github.com/jorisroovers/gitlint
     rev: v0.19.1
     hooks:
-    - id: gitlint
+      - id: gitlint
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v3.4.0
     hooks:
